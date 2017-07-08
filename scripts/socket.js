@@ -30,40 +30,25 @@ let count = 0;
 server.listen(3500, () => console.log('listening on *:3500'));
 // The event will be called when a client is connected.
 websocket.on('connection', (socket) => {
-    // 게스트
-    socket.emit('new', { nickname:'GUEST-'+count });
 
-    registerUser(socket, 'GUEST-' + count);
     count++;
-
-    socket.on('changeName', (data) => {
-        registerUser(socket, data.nickname);
+    // 닉네임 변경
+    socket.on('changeNickName', (nickname) => {
+        socket.broadcast.emit('toNick', nickname);
+        socket.emit('toNick', nickname);
     });
-
-
+    // 메세지 송수신
     socket.on('message', (data) => {
-
-        socket.broadcast.emit('toClient',data); // 자신을 제외하고 다른 클라이언트에게 보냄
-        socket.emit('toClient', data); // 해당 클라이언트에게만 보냄. 다른 클라이언트에 보낼려면?
-
+        // 자신을 제외하고 다른 클라이언트에게 보냄
+        socket.broadcast.emit('toClient', data);
+        // 해당 클라이언트에게만 보냄. 다른 클라이언트에 보낼려면?
+        socket.emit('toClient', data);
     });
-
-    socket.emit('init', socket.id);
+    // 초기화
+    socket.emit('init', {
+        id: socket.id,
+        nickname:'GUEST-'+count
+    });
 
 });
 
-
-
-function registerUser(socket, nickname){
-    // socket_id와 nickname 테이블을 셋업
-    socket.get('nickname', (err, pre_nick) => {
-        if(pre_nick !== undefined) delete socket_ids[pre_nick];
-
-        socket_ids[nickname] = socket.id;
-        socket.set('nickname', nickname, () => {
-            websocket.emit('userList', {
-                users: Object.keys(socket_ids)
-            });
-        });
-    });
-}
