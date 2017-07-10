@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
+import { getLogin, setLogin } from '../actions/Member';
 
 const fakeAuth = {
     isAuthenticated: false,
@@ -15,16 +16,35 @@ const fakeAuth = {
 
 class Login extends Component {
     state = {
+        id: '',
+        pw: '',
+        nick: 'shushu142',
         redirectToReferrer: false
     };
 
+    componentDidMount() {
+
+    };
+
     login = (e) => {
-        e.preventDefault();
+        /*getLogin();
 
         fakeAuth.authenticate(() => {
             this.setState({ redirectToReferrer: true })
-        })
+        })*/
     };
+
+    signUp = (e) => {
+        setLogin(this.state);
+    };
+
+    handleChange = (e) => {
+        let { name, value } = e.target;
+        this.setState({
+           [name] : value
+        });
+    };
+
 
     render() {
         const { redirectToReferrer } = this.state;
@@ -37,9 +57,25 @@ class Login extends Component {
 
         return (
             <div>
-                <div>email : <input type="text"/></div>
-                <div>pw: <input type="password"/></div>
-                <button onClick={this.login}>submit</button>
+                <form method="post" onSubmit={(e)=>{e.preventDefault();}}>
+                    <div>
+                        email :
+                        <input name="id" type="email" required="required"
+                               placeholder="sophie@example.com"
+                               value={this.state.id}
+                               onChange={this.handleChange}
+                        />
+                    </div>
+                    <div>
+                        pw:
+                        <input name="pw" type="password"
+                               value={this.state.pw}
+                               onChange={this.handleChange}
+                        />
+                    </div>
+                    <button onClick={this.login}>Sign in</button>
+                    <button onClick={this.signUp}>Sign up</button>
+                </form>
             </div>
         );
     }

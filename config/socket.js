@@ -1,21 +1,13 @@
+import db from '../src/db';
+
 let express = require('express');
 let http = require('http');
 let socketio = require('socket.io');
+
 // SERVER
 let app = express();
 let server = http.Server(app);
 let websocket = socketio(server);
-// DB
-let firebase = require("firebase");
-
-firebase.initializeApp({
-    serviceAccount: "../config/shushu-161f2c4f71e0.json",
-    databaseURL: "https://shushu-cb26c.firebaseio.com"
-});
-
-// The app only has access to public data as defined in the Security Rules
-var db = firebase.database();
-
 // init
 let rooms = [];
 let count = 0;
