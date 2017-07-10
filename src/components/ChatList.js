@@ -14,8 +14,8 @@ class ChatList extends Component {
         let {msgArr, id} = this.props.state;
 
         const systemMsg = (data) => (
-            <diV>
-                {data.old} / {data.current}
+            <diV className="systemMsg">
+                {data.old}님이 닉네임을 {data.current}로 변경했습니다.
             </diV>
         );
 
@@ -34,7 +34,7 @@ class ChatList extends Component {
         const mapToList =  msgArr.map((data, idx) => {
             return (
                 <div>
-                    {data.user === 'system' ?  systemMsg(data) : defaultMsg(data, idx)}
+                    {data.type === 'system' ?  systemMsg(data) : defaultMsg(data, idx)}
                 </div>
 
             )
