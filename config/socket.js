@@ -39,10 +39,10 @@ websocket.on('connection', (socket) => {
         // 현재 사용자 닉네임을 키값으로 socket.id를 저장
         rooms[data.room].socket_ids[socket.nickname] = socket.id;
         // 초기화
-        socket.in(data.room).emit('init', {
+/*        socket.in(data.room).emit('init', {
             id: socket.id,
             nickname:'GUEST-'+count
-        });
+        });*/
     });
 
 

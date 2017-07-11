@@ -4,7 +4,7 @@ import { Login, RoomList, RoomView } from './index';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
-import * as counterActions from '../modules/Counter';
+import * as memberAction from '../modules/Member';
 
 import SocketIOClient from 'socket.io-client';
 
@@ -14,15 +14,13 @@ class App extends Component {
 
     componentDidMount() {
         let _this = this;
-        //_this.props.CounterActions.increment()
-        /*this.socket.on('init', (data) => {
 
-        });*/
-    }    
+        this.socket.on('init', (data) => {
+            _this.props.memberAction.initialrize(data);
+        });
+    }
 
     render() {
-        const { CounterActions, number } = this.props;
-
         return (
             <div>
                 <Switch>
@@ -30,8 +28,6 @@ class App extends Component {
                     <Route path="/roomList" component={RoomList} />
                     <Route path="/roomView/:user" component={RoomView} />
                 </Switch>
-                <h1>{number}</h1>
-                <button onClick={CounterActions.increment}>+</button>
             </div>
         )
     }
@@ -39,12 +35,9 @@ class App extends Component {
 
 export default connect(
     (state) => ({
-        number: state.counter,
-        post: state.post.data,
-        loading: state.pender.pending['GET_POST'],
-        error: state.pender.failure['GET_POST']
+        initData: state.member
     }),
     (dispatch) => ({
-        CounterActions: bindActionCreators(counterActions, dispatch)
+        memberAction: bindActionCreators(memberAction, dispatch)
     })
 )(App);

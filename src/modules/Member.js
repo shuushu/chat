@@ -3,7 +3,7 @@ import { createAction, handleActions } from 'redux-actions';
 import { pender } from 'redux-pender';
 import axios from 'axios';
 
-const INIT = 'INIT';
+const SET_INIT = 'SET_INIT';
 const GET_LOGIN = 'GET_LOGIN';
 const SET_LOGIN = 'SET_LOGIN';
 
@@ -13,10 +13,8 @@ const initialState  = {
 };
 
 const initAPI = (data) => {
-
-/*    console.log(data)
-    init.socketID = data.id;
-    init.nick = data.nickname;*/
+    initialState.socketID = data.id;
+    initialState.nick = data.nickname;
 };
 
 const getLoginAPI = () => {
@@ -26,22 +24,24 @@ const getLoginAPI = () => {
 function setLoginAPI() {
     return axios.get('https://jsonplaceholder.typicode.com/posts/1');
 }
-
+/*
+ [createAction 원형]
+ export const getLogin = (index) => ({
+     type: types.GET_LOGIN,
+    index
+ });
+ */
 export const getLogin = createAction(GET_LOGIN, getLoginAPI);
-export const setLogin = createAction(SET_LOGIN);
-export const initialrize = createAction(INIT, initAPI);
+export const setLogin = createAction(SET_LOGIN, setLoginAPI);
+export const initialrize = createAction(SET_INIT, initAPI);
 
 export default handleActions({
-    [SET_LOGIN] : (state, action) => {
-        console.log(state,action)
-    }
-/*    ...pender({
-        type: SET_LOGIN,
+    ...pender({
+        type: SET_INIT,
         onSuccess: (state, action) => {
-            console.log('SUC / ', action.payload.data);
-            return alert('222')
+            console.log(state)
         }
-    })*/
+    })
 }, initialState);
 /*
 // 멤버조회
