@@ -18,24 +18,23 @@ class Login extends Component {
     state = {
         id: '',
         pw: '',
-        nick: 'shushu142',
+        socketID: '',
         redirectToReferrer: false
     };
 
     componentDidMount() {
-
     };
 
     login = (e) => {
-        /*getLogin();
-
-        fakeAuth.authenticate(() => {
+        getLogin(this.state, () => {
             this.setState({ redirectToReferrer: true })
-        })*/
+        });
     };
 
     signUp = (e) => {
-        setLogin(this.state);
+        setLogin(this.state, () => {
+            this.setState({ redirectToReferrer: true })
+        });
     };
 
     handleChange = (e) => {
