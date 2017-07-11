@@ -1,5 +1,49 @@
 import db from '../db';
+import { createAction, handleActions } from 'redux-actions';
+import { pender } from 'redux-pender';
+import axios from 'axios';
 
+const INIT = 'INIT';
+const GET_LOGIN = 'GET_LOGIN';
+const SET_LOGIN = 'SET_LOGIN';
+
+const initialState  = {
+    socketID: '',
+    nick: ''
+};
+
+const initAPI = (data) => {
+
+/*    console.log(data)
+    init.socketID = data.id;
+    init.nick = data.nickname;*/
+};
+
+const getLoginAPI = () => {
+
+};
+
+function setLoginAPI() {
+    return axios.get('https://jsonplaceholder.typicode.com/posts/1');
+}
+
+export const getLogin = createAction(GET_LOGIN, getLoginAPI);
+export const setLogin = createAction(SET_LOGIN);
+export const initialrize = createAction(INIT, initAPI);
+
+export default handleActions({
+    [SET_LOGIN] : (state, action) => {
+        console.log(state,action)
+    }
+/*    ...pender({
+        type: SET_LOGIN,
+        onSuccess: (state, action) => {
+            console.log('SUC / ', action.payload.data);
+            return alert('222')
+        }
+    })*/
+}, initialState);
+/*
 // 멤버조회
 export let getLogin = (state, func) => {
     let { id, pw, socketID } = state;
@@ -37,3 +81,4 @@ export let setLogin = (state) => {
         console.log("The read failed: " + errorObject.code);
     });
 };
+*/

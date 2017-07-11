@@ -1,5 +1,3 @@
-import db from '../src/db';
-
 let express = require('express');
 let http = require('http');
 let socketio = require('socket.io');
@@ -83,7 +81,9 @@ websocket.on('connection', (socket) => {
             delete data[nickname];
         }*/
     });
-
-
-
+    // 초기화
+    socket.emit('init', {
+        id: socket.id,
+        nickname:'GUEST-'+count
+    });
 });

@@ -1,9 +1,10 @@
 import { combineReducers } from 'redux';
+import post from './Post';
+import counter from './Counter';
 import { penderReducer } from 'redux-pender';
 
-const init = {
-    a: 'bb'
-};
+
+
 /*
 요청들을 관리하는 리듀서
 {
@@ -13,10 +14,8 @@ const init = {
 }
 구조로 나타남
 */
-const rootReducer = combineReducers({
-    init,
+export default combineReducers({
+    counter,
+    post,
     pender: penderReducer
 });
-
-
-export default rootReducer;

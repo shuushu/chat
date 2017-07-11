@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { getLogin, setLogin } from '../actions/Member';
+import { getLogin, setLogin } from '../modules/Member';
 
 const fakeAuth = {
     isAuthenticated: false,

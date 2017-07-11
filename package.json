@@ -38,7 +38,12 @@
     "react-dev-utils": "^3.0.2",
     "react-dom": "^15.6.1",
     "react-error-overlay": "^1.0.9",
+    "react-redux": "^5.0.5",
     "react-router-dom": "^4.1.1",
+    "redux": "^3.7.1",
+    "redux-actions": "^2.2.1",
+    "redux-pender": "^1.0.24",
+    "redux-thunk": "^2.2.0",
     "socket.io": "^2.0.3",
     "socket.io-client": "^2.0.3",
     "style-loader": "0.18.2",
@@ -54,7 +59,7 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "dev": "node scripts/socket.js",
+    "dev": "node config/socket.js",
     "test": "node scripts/test.js --env=jsdom"
   },
   "jest": {
