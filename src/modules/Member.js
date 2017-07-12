@@ -1,6 +1,7 @@
 import db from '../db';
 import { createAction, handleActions } from 'redux-actions';
 import { pender } from 'redux-pender';
+import axios from 'axios';
 
 const SET_INIT = 'SET_INIT';
 const GET_LOGIN = 'GET_LOGIN';
@@ -17,7 +18,8 @@ const initAPI = (data) => {
 };
 
 const getLoginAPI = (data, callBack) => {
-    let ref = db.ref('member');
+    return axios.get('/api/account/signup');
+/*    let ref = db.ref('member');
 
     ref.on('child_added', (snapshot)=>{
         let { id, pw } = snapshot.val();
@@ -28,11 +30,12 @@ const getLoginAPI = (data, callBack) => {
         } else {
             console.log('login fail');
         }
-    })
+    })*/
 };
 
 const setLoginAPI = (data) => {
-    let ref = db.ref('member');
+    return axios.post('/api/account/signup', data);
+/*    let ref = db.ref('member');
 
     ref.once('child_added', (snapshot)=>{
         let { id }  = snapshot.val();
@@ -46,7 +49,7 @@ const setLoginAPI = (data) => {
                 pw: data.pw,
             });
         }
-    })
+    })*/
 };
 
 /*
@@ -61,10 +64,18 @@ export const setLogin = createAction(SET_LOGIN, setLoginAPI);
 export const initialrize = createAction(SET_INIT, initAPI);
 
 export default handleActions({
-    ...pender({
-        type: GET_LOGIN,
-        onSuccess: (state, action) => {
-            console.log(state)
+    ...pender(
+        {
+            type: GET_LOGIN,
+            onSuccess: (state, action) => {
+                console.log(state)
+            }
+        },
+        {
+            type: SET_LOGIN,
+            onSuccess: (state, action) => {
+                console.log(state)
+            }
         }
-    })
+    )
 }, initialState);

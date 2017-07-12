@@ -6,11 +6,18 @@ let socketio = require('socket.io');
 let app = express();
 let server = http.Server(app);
 let websocket = socketio(server);
+
+let session = require('express-session');
 // init
 let rooms = [];
 let count = 0;
 
 
+app.use(session({
+    secret: '@#@$MYSIGN#@$#$',
+    resave: false,
+    saveUninitialized: true
+}));
 
 
 
