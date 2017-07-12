@@ -20,6 +20,11 @@ componentDidMount() {
 ### 시나리오
 
 1) 로그인 ? 채팅리스트 진입 : member add
+- [로그인세션](https://velopert.com/1967)
+1-1) 로그인 성공후 채팅리스트 진입시 socket 연결
+
+1-2) url입력으로 채팅리스트에 들어올 경우 redirect(login응답 구분)
+
 - [redux-pender](https://velopert.com/3401#2-3-redux-promise-middleware)
 ```
 프로미스 기반 액션들을 관리하기 위한 미들웨어와 도구가 포함되어있는 라이브러리
@@ -34,4 +39,5 @@ componentDidMount() {
 3) 룸리스트 ? 채널에 1개라도 룸리스트가 있으면 보여줌 : 채널에 첫 접속자가 방을만듦
 4) RoomList / socketID별 채팅방 구현
 
+### 이슈
 
