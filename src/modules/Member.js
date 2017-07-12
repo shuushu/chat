@@ -1,7 +1,6 @@
 import db from '../db';
 import { createAction, handleActions } from 'redux-actions';
 import { pender } from 'redux-pender';
-import axios from 'axios';
 
 const SET_INIT = 'SET_INIT';
 const GET_LOGIN = 'GET_LOGIN';
@@ -17,13 +16,39 @@ const initAPI = (data) => {
     initialState.nick = data.nickname;
 };
 
-const getLoginAPI = () => {
+const getLoginAPI = (data, callBack) => {
+    let ref = db.ref('member');
 
+    ref.on('child_added', (snapshot)=>{
+        let { id, pw } = snapshot.val();
+
+        if(id === data.id && pw === data.pw) {
+            alert('Login success');
+            callBack();
+        } else {
+            console.log('login fail');
+        }
+    })
 };
 
-function setLoginAPI() {
-    return axios.get('https://jsonplaceholder.typicode.com/posts/1');
-}
+const setLoginAPI = (data) => {
+    let ref = db.ref('member');
+
+    ref.once('child_added', (snapshot)=>{
+        let { id }  = snapshot.val();
+
+        if(id === data.id) {
+            alert('아이디가 존재');
+            return false;
+        } else {
+            ref.push({
+                id: data.id,
+                pw: data.pw,
+            });
+        }
+    })
+};
+
 /*
  [createAction 원형]
  export const getLogin = (index) => ({
@@ -37,48 +62,9 @@ export const initialrize = createAction(SET_INIT, initAPI);
 
 export default handleActions({
     ...pender({
-        type: SET_INIT,
+        type: GET_LOGIN,
         onSuccess: (state, action) => {
             console.log(state)
         }
     })
 }, initialState);
-/*
-// 멤버조회
-export let getLogin = (state, func) => {
-    let { id, pw, socketID } = state;
-    let ref = db.ref(`member/${socketID}`);
-
-    ref.once('value', (query) => {       
-        if(query.val()) {
-            console.log('Access / ' , query.val());
-            func();
-        } else {
-            alert('회원등록이 안되었거나, 로그인 오류!');
-            return false;
-        }
-    })
-};
-
-// 회원등록
-export let setLogin = (state) => {
-    let { id, pw, socketID } = state;
-    let ref = db.ref(`member/${socketID}`);
-
-    ref.once('value', (query) => {
-         if(query.val()) {
-            alert('닉네임으로 사용할 수 없습니다');
-            return false;
-        } else {
-            ref.update({
-                id: id,
-                pw: pw
-            }, () => {
-                alert(`회원등록 id: ${id}, pw: ${pw}`)
-            });
-        }
-    }, (errorObject) => {
-        console.log("The read failed: " + errorObject.code);
-    });
-};
-*/
