@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
-import { getLogin, setLogin } from '../modules/Member';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import * as memberAction from '../modules/Member';
 
 const fakeAuth = {
     isAuthenticated: false,
@@ -18,23 +20,24 @@ class Login extends Component {
     state = {
         id: '',
         pw: '',
-        socketID: '',
         redirectToReferrer: false
     };
 
     componentDidMount() {
     };
 
-    login = (e) => {
-        getLogin(this.state, () => {
-            this.setState({ redirectToReferrer: true })
+    signIn = (event) => {
+        event.preventDefault();
+
+        this.props.memberAction.getLogin(this.state, () => {
+            this.setState({ redirectToReferrer: true });
         });
     };
 
-    signUp = (e) => {
-        setLogin(this.state, () => {
-            this.setState({ redirectToReferrer: true })
-        });
+    signUp = (event) => {
+        event.preventDefault();
+
+        this.props.memberAction.setLogin(this.state);
     };
 
     handleChange = (e) => {
@@ -72,7 +75,7 @@ class Login extends Component {
                                onChange={this.handleChange}
                         />
                     </div>
-                    <button onClick={this.login}>Sign in</button>
+                    <button onClick={this.signIn}>Sign in</button>
                     <button onClick={this.signUp}>Sign up</button>
                 </form>
             </div>
@@ -80,4 +83,9 @@ class Login extends Component {
     }
 }
 
-export default Login;
+export default connect(
+    (state) => ({}),
+    (dispatch) => ({
+        memberAction: bindActionCreators(memberAction, dispatch)
+    })
+)(Login);
