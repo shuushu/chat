@@ -21,6 +21,8 @@ componentDidMount() {
 
 1) 로그인 ? 채팅리스트 진입 : member add
 - [로그인세션](https://velopert.com/1967)
+- [express세션](https://velopert.com/406)
+
 1-1) 로그인 성공후 채팅리스트 진입시 socket 연결
 
 1-2) url입력으로 채팅리스트에 들어올 경우 redirect(login응답 구분)
