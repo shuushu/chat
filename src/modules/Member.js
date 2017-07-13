@@ -1,4 +1,4 @@
-import db from '../db';
+//import db from '../db';
 import { createAction, handleActions } from 'redux-actions';
 import { pender } from 'redux-pender';
 import axios from 'axios';
@@ -18,45 +18,17 @@ const initAPI = (data) => {
 };
 
 const getLoginAPI = (data, callBack) => {
-    return axios.get('/api/account/signup');
-/*    let ref = db.ref('member');
-
-    ref.on('child_added', (snapshot)=>{
-        let { id, pw } = snapshot.val();
-
-        if(id === data.id && pw === data.pw) {
-            alert('Login success');
-            callBack();
-        } else {
-            console.log('login fail');
-        }
-    })*/
+    return axios.post('/api/account/signin', data);
 };
 
 const setLoginAPI = (data) => {
     return axios.post('/api/account/signup', data);
-/*    let ref = db.ref('member');
-
-    ref.once('child_added', (snapshot)=>{
-        let { id }  = snapshot.val();
-
-        if(id === data.id) {
-            alert('아이디가 존재');
-            return false;
-        } else {
-            ref.push({
-                id: data.id,
-                pw: data.pw,
-            });
-        }
-    })*/
 };
-
 /*
  [createAction 원형]
  export const getLogin = (index) => ({
-     type: types.GET_LOGIN,
-    index
+ type: types.GET_LOGIN,
+ index
  });
  */
 export const getLogin = createAction(GET_LOGIN, getLoginAPI);

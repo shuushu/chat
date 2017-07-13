@@ -1,53 +1,44 @@
-//import db from '../db';
-import { createAction, handleActions } from 'redux-actions';
-import { pender } from 'redux-pender';
-import axios from 'axios';
+let express = require('express');
+let router = express.Router();
+let db = require('../models/db');
 
-const SET_INIT = 'SET_INIT';
-const GET_LOGIN = 'GET_LOGIN';
-const SET_LOGIN = 'SET_LOGIN';
+// middleware that is specific to this router
+router.use(function timeLog(req, res, next) {
+    console.log('Time: ', Date.now());
+    next();
+});
 
-const initialState  = {
-    socketID: '',
-    nick: ''
-};
 
-const initAPI = (data) => {
-    initialState.socketID = data.id;
-    initialState.nick = data.nickname;
-};
+// define the about route
+router.post('/signin', function(req, res) {
+    db.ref('member').on('child_added', function(snapshot) {
+        let { id, pw } = snapshot.val();
 
-const getLoginAPI = (data, callBack) => {
-    return axios.post('/api/account/signin', data);
-};
-
-const setLoginAPI = (data) => {
-    return axios.post('/api/account/signup', data);
-};
-/*
- [createAction 원형]
- export const getLogin = (index) => ({
-     type: types.GET_LOGIN,
-    index
- });
- */
-export const getLogin = createAction(GET_LOGIN, getLoginAPI);
-export const setLogin = createAction(SET_LOGIN, setLoginAPI);
-export const initialrize = createAction(SET_INIT, initAPI);
-
-export default handleActions({
-    ...pender(
-        {
-            type: GET_LOGIN,
-            onSuccess: (state, action) => {
-                console.log(state)
-            }
-        },
-        {
-            type: SET_LOGIN,
-            onSuccess: (state, action) => {
-                console.log(state)
-            }
+        if(id === req.body.id && pw === req.body.pw) {
+            return 1;
+        } else {
+            return 0;
         }
-    )
-}, initialState);
+    });
+
+
+});
+
+router.post('/signup', function(req, res) {
+    db.ref('member').on('child_added', (snapshot)=>{
+        let { id, pw }  = snapshot.val();
+
+        if(id === req.body.id) {
+            console.log('fail');
+        } else {
+            db.ref('member').push({
+             id: req.body.id,
+             pw: req.body.pw,
+            }, () => {
+                res.send('success');
+            })
+        }
+    });
+});
+
+module.exports = router;
