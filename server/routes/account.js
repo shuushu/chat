@@ -1,60 +1,53 @@
-let express = require('express');
-let router = express.Router();
-let db = require('../models/db');
+//import db from '../db';
+import { createAction, handleActions } from 'redux-actions';
+import { pender } from 'redux-pender';
+import axios from 'axios';
 
- // middleware that is specific to this router
- router.use(function timeLog(req, res, next) {
-    console.log('Time: ', Date.now());
-    next();
- });
+const SET_INIT = 'SET_INIT';
+const GET_LOGIN = 'GET_LOGIN';
+const SET_LOGIN = 'SET_LOGIN';
 
+const initialState  = {
+    socketID: '',
+    nick: ''
+};
+
+const initAPI = (data) => {
+    initialState.socketID = data.id;
+    initialState.nick = data.nickname;
+};
+
+const getLoginAPI = (data, callBack) => {
+    return axios.post('/api/account/signin', data);
+};
+
+const setLoginAPI = (data) => {
+    return axios.post('/api/account/signup', data);
+};
 /*
- ERROR CODES
- 1: NOT LOGGED IN
- 2: EMPTY CONTENTS
- */
- router.post('/signin', function(req, res) {
-     // Error
-     if(req.body.contents === "") {
-         return res.status(400).json({
-             error: "EMPTY CONTENTS",
-             code: 2
-         });
-     }
-
-     db.ref('member').on('child_added', (snapshot)=>{
-        let { id, pw } = snapshot.val();
-
-        console.log('db / ', req.body);
-
-        if(id === req.body.id && pw === req.body.pw) {
-            console.log('login success');
-        } else {
-            console.log('login fail');
-        }
-    });
-
-    res.send('signin');
+ [createAction 원형]
+ export const getLogin = (index) => ({
+     type: types.GET_LOGIN,
+    index
  });
+ */
+export const getLogin = createAction(GET_LOGIN, getLoginAPI);
+export const setLogin = createAction(SET_LOGIN, setLoginAPI);
+export const initialrize = createAction(SET_INIT, initAPI);
 
-router.post('/signup', function(req, res) {
-    let reqID = req.body.id;
-    let reqPW = req.body.pw;
-
-    db.ref('member').on('child_added', function(snapshot) {
-        let { id }  = snapshot.val();
-
-        if(id === reqID) {
-            res.send('fail');
-        } else {
-            db.ref('member').push({
-                id: reqID,
-                pw: reqPW,
-            }, function() {
-                return res.send('success');
-            });
+export default handleActions({
+    ...pender(
+        {
+            type: GET_LOGIN,
+            onSuccess: (state, action) => {
+                console.log(state)
+            }
+        },
+        {
+            type: SET_LOGIN,
+            onSuccess: (state, action) => {
+                console.log(state)
+            }
         }
-    });
-});
-
- module.exports = router;
+    )
+}, initialState);
