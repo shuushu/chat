@@ -1,38 +1,3 @@
-/*
-let express = require('express');
-let router = express.Router();
-
-
-router.use(function timeLog(req, res, next) {
-    console.log('Time: ', Date.now());
-    next();
-});
-
-router.post('/signup', (req, res) => {
-    let sess;
-    sess = req.session;
-
-    console.log(res);
-    return res.json({ success: true });
-});
-
-router.post('/signin', (req, res) => {
-    /!* to be implemented *!/
-    res.json({ success: true });
-});
-
-router.get('/getinfo', (req, res) => {
-    res.json({ info: null });
-});
-
-router.post('/logout', (req, res) => {
-    return res.json({ success: true });
-});
-
-module.exports = router;*/
-
-
-
 let express = require('express');
 let router = express.Router();
 let db = require('../models/db');
@@ -43,40 +8,51 @@ let db = require('../models/db');
     next();
  });
 
+/*
+ ERROR CODES
+ 1: NOT LOGGED IN
+ 2: EMPTY CONTENTS
+ */
+ router.post('/signin', function(req, res) {
+     // Error
+     if(req.body.contents === "") {
+         return res.status(400).json({
+             error: "EMPTY CONTENTS",
+             code: 2
+         });
+     }
 
- // define the about route
- router.get('/signin', function(req, res) {
-
-    let ref = db.ref('member');
-
-    ref.on('child_added', (snapshot)=>{
+     db.ref('member').on('child_added', (snapshot)=>{
         let { id, pw } = snapshot.val();
 
-        if(id === data.id && pw === data.pw) {
-            alert('Login success');
+        console.log('db / ', req.body);
+
+        if(id === req.body.id && pw === req.body.pw) {
+            console.log('login success');
         } else {
             console.log('login fail');
         }
     });
 
-    //res.send('About birds');
+    res.send('signin');
  });
 
 router.post('/signup', function(req, res) {
-    console.log(req.params)
-    db.ref('member').on('child_added', (snapshot)=>{
-        let { id, pw }  = snapshot.val();
+    let reqID = req.body.id;
+    let reqPW = req.body.pw;
 
+    db.ref('member').on('child_added', function(snapshot) {
+        let { id }  = snapshot.val();
 
-        if(id === req.id) {
-            console.log('fail');
+        if(id === reqID) {
+            res.send('fail');
         } else {
-/*            db.ref('member').push({
-                id: req.id,
-                pw: req.pw,
-            }, () => {
-                res.send('success');
-            })*/
+            db.ref('member').push({
+                id: reqID,
+                pw: reqPW,
+            }, function() {
+                return res.send('success');
+            });
         }
     });
 });
