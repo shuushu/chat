@@ -8,8 +8,8 @@ class App extends Component {
         return (
             <div>
                 <Switch>
-                    <Route exact path="/" component={Login} />
-                    <Route path="/roomList" component={RoomList} />
+                    <Route exact path="/" component={RoomList} />
+                    <Route path="/Login" component={Login} />
                     <Route path="/roomView/:user" component={RoomView} />
                 </Switch>
             </div>

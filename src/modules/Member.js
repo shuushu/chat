@@ -1,6 +1,6 @@
-//import db from '../db';
 import { createAction, handleActions } from 'redux-actions';
 import { pender } from 'redux-pender';
+import firebase from 'firebase';
 import axios from 'axios';
 
 const SET_INIT = 'SET_INIT';
@@ -8,13 +8,32 @@ const GET_LOGIN = 'GET_LOGIN';
 const SET_LOGIN = 'SET_LOGIN';
 
 const initialState  = {
-    socketID: '',
-    nick: ''
+    redirectToReferrer: true
 };
 
 const initAPI = (data) => {
-    initialState.socketID = data.id;
-    initialState.nick = data.nickname;
+    if (!firebase.apps.length) {
+        firebase.initializeApp({
+            apiKey: "AIzaSyBwc5tkZM3fEQcyPC1-HfguTbIt8woO9iA",
+            authDomain: "shushu-cb26c.firebaseapp.com",
+            databaseURL: "https://shushu-cb26c.firebaseio.com",
+            storageBucket: "shushu-cb26c.appspot.com",
+        });
+
+
+        firebase.auth().onAuthStateChanged(function(user) {
+            console.log('user', user)
+            if (user) {
+                // User is email in.
+                initialState.name = user.email;
+                initialState.uid = user.uid;
+                initialState.redirectToReferrer = false;
+            } else {
+                console.log('n / ', user)
+                // No user is signed in.
+            }
+        });
+    }
 };
 
 const getLoginAPI = (data, callBack) => {
@@ -45,6 +64,12 @@ export default handleActions({
         },
         {
             type: SET_LOGIN,
+            onSuccess: (state, action) => {
+                console.log(state)
+            }
+        },
+        {
+            type: SET_INIT,
             onSuccess: (state, action) => {
                 console.log(state)
             }

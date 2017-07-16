@@ -10,27 +10,6 @@ admin.initializeApp({
 
 let uid = 'xSZeG46uzUfDAzGGLuzbIgZ0SAE3';
 
-admin.auth().createCustomToken(uid)
-    .then(function(customToken) {
-        // Send token back to client
-    })
-    .catch(function(error) {
-        console.log("Error creating custom token:", error);
-    });
-
-admin.auth().createUser({
-    uid: uid,
-    email: "hosoon2@gmail.com"
-})
-.then(function(userRecord) {
-    // A UserRecord representation of the newly created user is returned
-    console.log("Successfully created new user:", userRecord.uid);
-})
-.catch(function(error) {
-    console.log("Error creating new user:", error);
-});
-
-
 
 let db = admin.database();
 

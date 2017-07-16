@@ -20,14 +20,9 @@ class Login extends Component {
     };
 
     componentDidMount() {
-        let config = {
-            apiKey: "AIzaSyBwc5tkZM3fEQcyPC1-HfguTbIt8woO9iA",
-            authDomain: "shushu-cb26c.firebaseapp.com",
-            databaseURL: "https://shushu-cb26c.firebaseio.com",
-            storageBucket: "shushu-cb26c.appspot.com",
-        };
+        this.props.memberAction.initialrize();
 
-        firebase.initializeApp(config);
+
         // FirebaseUI config.
         let uiConfig = {
             signInSuccessUrl: '/',
@@ -55,16 +50,16 @@ class Login extends Component {
             regMode : !this.state.regMode
         });
     };
-
+    // 로그인
     signIn = (event) => {
         event.preventDefault();
 
         firebase.auth().signInWithEmailAndPassword(this.state.id, this.state.pw)
-            .then((e) => {
+            .then(() => {
                 // LOGIN SUCCESS
                 this.setState({
                     redirectToReferrer: true
-                })
+                });
             })
             .catch(function(error) {
                 console.log(error.code , error.message);
@@ -73,7 +68,7 @@ class Login extends Component {
             this.setState({ redirectToReferrer: true });
         });*/
     };
-
+    // 회원가입
     signUp = (event) => {
         event.preventDefault();
 
@@ -173,7 +168,9 @@ class Login extends Component {
 }
 
 export default connect(
-    (state) => ({}),
+    (state) => ({
+        init: state
+    }),
     (dispatch) => ({
         memberAction: bindActionCreators(memberAction, dispatch)
     })
