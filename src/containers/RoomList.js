@@ -1,36 +1,32 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import * as memberAction from '../modules/Member';
+import firebase from 'firebase';
 
 class RoomList extends Component {
-    componentDidMount() {
-        this.props.memberAction.initialrize();
+    componentWillMount() {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "/Login"
+            }
+        })
+    };
+
+    logout = () => {
+        firebase.auth().signOut().then(function() {
+            // Sign-out successful.
+            alert('success')
+        }, function(error) {
+            // An error happened.
+        });
     };
 
     render() {
-        const { redirectToReferrer } = this.props.init;
-
-        if (redirectToReferrer) {
-            return (
-                <Redirect to="/Login" />
-            )
-        }
-
         return (
             <div>
                 ROOM LIST
+                <button onClick={this.logout}>LOGOUT</button>
             </div>
         );
     }
 }
 
-export default connect(
-    (state) => ({
-        init: state.member
-    }),
-    (dispatch) => ({
-        memberAction: bindActionCreators(memberAction, dispatch)
-    })
-)(RoomList);
+export default RoomList;

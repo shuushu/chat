@@ -1,8 +1,4 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import * as memberAction from '../modules/Member';
 // UI
 import firebase from 'firebase';
 import firebaseui from 'firebaseui';
@@ -15,17 +11,21 @@ class Login extends Component {
     state = {
         id: '',
         pw: '',
-        regMode: false,
-        redirectToReferrer: false
+        regMode: false
+    };
+
+    componentWillMount() {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = "/RoomList"
+            }
+        })
     };
 
     componentDidMount() {
-        this.props.memberAction.initialrize();
-
-
         // FirebaseUI config.
         let uiConfig = {
-            signInSuccessUrl: '/',
+            signInSuccessUrl: '/RoomList',
             signInOptions: [
                 // Leave the lines as is for the providers you want to offer your users.
                 firebase.auth.GoogleAuthProvider.PROVIDER_ID,
@@ -36,7 +36,7 @@ class Login extends Component {
                 firebase.auth.PhoneAuthProvider.PROVIDER_ID
             ],
             // Terms of service url.
-            tosUrl: '/roomList'
+            tosUrl: '/RoomList'
         };
 
         // Initialize the FirebaseUI Widget using Firebase.
@@ -45,7 +45,7 @@ class Login extends Component {
         ui.start('#firebaseui-auth-container', uiConfig);
     };
     // 로그인 / 회원가입 모드 변경
-    handleChangeMode = (e) => {
+    handleChangeMode = () => {
         this.setState({
             regMode : !this.state.regMode
         });
@@ -55,18 +55,9 @@ class Login extends Component {
         event.preventDefault();
 
         firebase.auth().signInWithEmailAndPassword(this.state.id, this.state.pw)
-            .then(() => {
-                // LOGIN SUCCESS
-                this.setState({
-                    redirectToReferrer: true
-                });
-            })
             .catch(function(error) {
                 console.log(error.code , error.message);
             });
-        /*this.props.memberAction.getLogin(this.state, () => {
-            this.setState({ redirectToReferrer: true });
-        });*/
     };
     // 회원가입
     signUp = (event) => {
@@ -76,7 +67,6 @@ class Login extends Component {
             .catch(function(error) {
                 console.log(error.code , error.message);
             });
-        //this.props.memberAction.setLogin(this.state);
     };
 
     handleChange = (e) => {
@@ -89,14 +79,6 @@ class Login extends Component {
 
 
     render() {
-        const { redirectToReferrer } = this.state;
-
-        if (redirectToReferrer) {
-            return (
-                <Redirect to="/roomList"/>
-            )
-        }
-
         const inputBox = (
             <div>
                 <div className="input-field col s12 username">
@@ -117,7 +99,7 @@ class Login extends Component {
         );
 
         const loginView = (
-            <form method="post" onSubmit={(e)=>{e.preventDefault();}}>
+            <form method="post" action="/">
                 <div className="card-content">
                     <div className="row">
                         { inputBox }
@@ -135,7 +117,7 @@ class Login extends Component {
         );
 
         const registerView = (
-            <form method="post" onSubmit={(e)=>{e.preventDefault();}}>
+            <form method="post" action="/">
                 <div className="card-content">
                     <div className="row">
                         { inputBox }
@@ -167,11 +149,4 @@ class Login extends Component {
     }
 }
 
-export default connect(
-    (state) => ({
-        init: state
-    }),
-    (dispatch) => ({
-        memberAction: bindActionCreators(memberAction, dispatch)
-    })
-)(Login);
+export default Login;
