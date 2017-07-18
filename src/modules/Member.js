@@ -5,10 +5,7 @@ import axios from 'axios';
 const GET_LOGIN = 'GET_LOGIN';
 const SET_LOGIN = 'SET_LOGIN';
 
-const initialState  = {
-
-};
-
+const initialState = window.__PRELOADED_STATE__;
 
 const getLoginAPI = (data, callBack) => {
     return axios.post('/api/account/signin', data);
@@ -20,11 +17,11 @@ const setLoginAPI = (data) => {
 
 
 /*
- [createAction 원형]
- export const getLogin = (index) => ({
- type: types.GET_LOGIN,
- index
- });
+     [createAction 원형]
+     export const getLogin = (index) => ({
+        type: types.GET_LOGIN,
+        index
+     });
  */
 export const getLogin = createAction(GET_LOGIN, getLoginAPI);
 export const setLogin = createAction(SET_LOGIN, setLoginAPI);

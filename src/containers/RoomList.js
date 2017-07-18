@@ -2,13 +2,6 @@ import React, { Component } from 'react';
 import firebase from 'firebase';
 
 class RoomList extends Component {
-    componentWillMount() {
-        firebase.auth().onAuthStateChanged((user) => {
-            if (!user) {
-                window.location.href = "/Login"
-            }
-        })
-    };
 
     logout = () => {
         firebase.auth().signOut().then(function() {

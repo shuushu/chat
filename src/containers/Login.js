@@ -14,13 +14,6 @@ class Login extends Component {
         regMode: false
     };
 
-    componentWillMount() {
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                window.location.href = "/RoomList"
-            }
-        })
-    };
 
     componentDidMount() {
         // FirebaseUI config.
