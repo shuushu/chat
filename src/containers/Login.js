@@ -1,21 +1,36 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 // UI
 import firebase from 'firebase';
 import firebaseui from 'firebaseui';
 import 'firebaseui/dist/firebaseui.css';
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
+import {
+  firebaseConnect,
+  isLoaded,
+  isEmpty,
+  pathToJS,
+  dataToJS,
+  getFirebase
+} from 'react-redux-firebase'
 
+@firebaseConnect()
+@connect(
+  ({ firebase }) => ({
+    user: pathToJS(firebase, 'auth'),
+    email: pathToJS(firebase, 'auth.email')
+  })
+)
 
 class Login extends Component {
     state = {
-        id: '',
-        pw: '',
         regMode: false
     };
 
 
     componentDidMount() {
+console.log('componentDidMount / ', this.props.user)
         // FirebaseUI config.
         let uiConfig = {
             signInSuccessUrl: '/RoomList',
@@ -46,11 +61,14 @@ class Login extends Component {
     // 로그인
     signIn = (event) => {
         event.preventDefault();
-
-        firebase.auth().signInWithEmailAndPassword(this.state.id, this.state.pw)
+        this.props.firebase.login({
+          email: this.state.id,
+          password: this.state.pw
+        })
+/*        firebase.auth().signInWithEmailAndPassword(this.state.id, this.state.pw)
             .catch(function(error) {
                 console.log(error.code , error.message);
-            });
+            });*/
     };
     // 회원가입
     signUp = (event) => {
@@ -72,6 +90,8 @@ class Login extends Component {
 
 
     render() {
+        console.log('USER / ', this.props)
+
         const inputBox = (
             <div>
                 <div className="input-field col s12 username">
@@ -126,6 +146,7 @@ class Login extends Component {
         );
 
         return (
+
             <div className="container auth">
                 <a className="logo">MEMOPAD</a>
                 <div className="card">
