@@ -1,8 +1,28 @@
 import { createStore, applyMiddleware, compose } from 'redux';
 import modules from './modules';
-
 import ReduxThunk from 'redux-thunk';
 import penderMiddleware from 'redux-pender';
+import firebase from 'firebase';
+import { reduxFirebase } from 'react-redux-firebase';
+
+const fbConfig = {
+	apiKey: "AIzaSyBwc5tkZM3fEQcyPC1-HfguTbIt8woO9iA",
+	authDomain: "shushu-cb26c.firebaseapp.com",
+	databaseURL: "https://shushu-cb26c.firebaseio.com",
+	storageBucket: "shushu-cb26c.appspot.com"
+}
+
+firebase.initializeApp(fbConfig);
+
+const config = {
+  userProfile: 'users', // firebase root where user profiles are stored
+  enableLogging: false, // enable/disable Firebase's database logging
+}
+
+const createStoreWithFirebase = compose(
+  reduxFirebase(fbConfig, config),
+)(createStore);
+
 
 const composeEnhancers =
     typeof window === 'object' &&
@@ -17,7 +37,7 @@ const enhancer = composeEnhancers(
     applyMiddleware(ReduxThunk, penderMiddleware())
     // other store enhancers if any
 );
-const store = createStore(modules, enhancer);
+const store = createStoreWithFirebase(modules, enhancer);
 
 
 
