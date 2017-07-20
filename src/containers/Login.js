@@ -1,36 +1,34 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Redirect } from 'react-router-dom';
 // UI
 import firebase from 'firebase';
 import firebaseui from 'firebaseui';
 import 'firebaseui/dist/firebaseui.css';
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
-import {
-  firebaseConnect,
-  isLoaded,
-  isEmpty,
-  pathToJS,
-  dataToJS,
-  getFirebase
-} from 'react-redux-firebase'
+import { firebaseConnect, pathToJS } from 'react-redux-firebase'
 
 @firebaseConnect()
 @connect(
   ({ firebase }) => ({
-    user: pathToJS(firebase, 'auth'),
-    email: pathToJS(firebase, 'auth.email')
+    auth : pathToJS(firebase, 'auth')
   })
 )
 
 class Login extends Component {
     state = {
-        regMode: false
+        regMode: false,
+        redirect: false
     };
 
+    componentWillReceiveProps ({ auth }) {
+        if (auth) {
+            this.setState({
+                redirect: true
+            })
+        }
 
-    componentDidMount() {
-console.log('componentDidMount / ', this.props.user)
         // FirebaseUI config.
         let uiConfig = {
             signInSuccessUrl: '/RoomList',
@@ -62,13 +60,9 @@ console.log('componentDidMount / ', this.props.user)
     signIn = (event) => {
         event.preventDefault();
         this.props.firebase.login({
-          email: this.state.id,
-          password: this.state.pw
-        })
-/*        firebase.auth().signInWithEmailAndPassword(this.state.id, this.state.pw)
-            .catch(function(error) {
-                console.log(error.code , error.message);
-            });*/
+            email: this.state.id,
+            password: this.state.pw
+        });
     };
     // 회원가입
     signUp = (event) => {
@@ -90,8 +84,11 @@ console.log('componentDidMount / ', this.props.user)
 
 
     render() {
-        console.log('USER / ', this.props)
-
+        if(this.state.redirect) {
+            return (
+                <Redirect to="/" />
+            )
+        }
         const inputBox = (
             <div>
                 <div className="input-field col s12 username">
