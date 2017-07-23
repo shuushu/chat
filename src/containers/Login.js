@@ -3,11 +3,10 @@ import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 // UI
 import firebase from 'firebase';
-import firebaseui from 'firebaseui';
-import 'firebaseui/dist/firebaseui.css';
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
+
 
 @firebaseConnect()
 @connect(
@@ -18,8 +17,11 @@ import { firebaseConnect, pathToJS } from 'react-redux-firebase'
 
 class Login extends Component {
     state = {
+        id: '',
+        pw: '',
         regMode: false,
-        redirect: false
+        redirect: false,
+        selectedOption: 'email'
     };
 
     componentWillReceiveProps ({ auth }) {
@@ -28,28 +30,14 @@ class Login extends Component {
                 redirect: true
             })
         }
-
-        // FirebaseUI config.
-        let uiConfig = {
-            signInSuccessUrl: '/RoomList',
-            signInOptions: [
-                // Leave the lines as is for the providers you want to offer your users.
-                firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-                firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-                firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-                firebase.auth.GithubAuthProvider.PROVIDER_ID,
-                firebase.auth.EmailAuthProvider.PROVIDER_ID,
-                firebase.auth.PhoneAuthProvider.PROVIDER_ID
-            ],
-            // Terms of service url.
-            tosUrl: '/RoomList'
-        };
-
-        // Initialize the FirebaseUI Widget using Firebase.
-        let ui = new firebaseui.auth.AuthUI(firebase.auth());
-        // The start method will wait until the DOM is loaded.
-        ui.start('#firebaseui-auth-container', uiConfig);
+    }
+    // 로그인 방법
+    handleCheckRadio = (changeEvent) => {
+        this.setState({
+            selectedOption: changeEvent.target.value
+        });
     };
+
     // 로그인 / 회원가입 모드 변경
     handleChangeMode = () => {
         this.setState({
@@ -58,10 +46,18 @@ class Login extends Component {
     };
     // 로그인
     signIn = (event) => {
-        event.preventDefault();
-        this.props.firebase.login({
+        let credentials = {
             email: this.state.id,
-            password: this.state.pw
+            password: this.state.pw,
+        };
+
+        if(this.state.selectedOption !== 'email') {
+            credentials.provider = this.state.selectedOption;
+            credentials.type = 'popup';
+        }
+
+        this.props.firebase.login(credentials).catch(function(error) {
+            console.log(error.message);
         });
     };
     // 회원가입
@@ -109,10 +105,38 @@ class Login extends Component {
         );
 
         const loginView = (
-            <form method="post" action="/">
+            <form onSubmit={(e) => {e.preventDefault()}}>
                 <div className="card-content">
                     <div className="row">
                         { inputBox }
+                        <div>
+                            <input id="ico_email" name="loginProvider" type="radio"
+                                   value="email"
+                                   onChange={this.handleCheckRadio}
+                                   checked={this.state.selectedOption === 'email'}
+                            />
+                            <label htmlFor="ico_email">
+                                email
+                            </label>
+
+                            <input id="ico_google" name="loginProvider" type="radio"
+                                   value="google"
+                                   onChange={this.handleCheckRadio}
+                                   checked={this.state.selectedOption === 'google'}
+                            />
+                            <label htmlFor="ico_google">
+                                google
+                            </label>
+
+                            <input id="ico_facebook" name="loginProvider" type="radio"
+                                   value="facebook"
+                                   onChange={this.handleCheckRadio}
+                                   checked={this.state.selectedOption === 'facebook'}
+                            />
+                            <label htmlFor="ico_facebook">
+                                facebook
+                            </label>
+                        </div>
                         <button className="waves-effect waves-light btn" onClick={this.signIn} >SUBMIT</button>
                     </div>
                 </div>

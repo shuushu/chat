@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import firebase from 'firebase';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
 
 @firebaseConnect()
@@ -25,11 +24,7 @@ class RoomList extends Component {
     }
 
     logout = () => {
-        this.props.firebase.logout().then(() => {
-            this.setState({
-                redirect: true
-            })
-        })
+        this.props.firebase.logout();
     };
 
     render() {
