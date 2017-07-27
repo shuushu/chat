@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
+import SocketIOClient from 'socket.io-client';
 
 @firebaseConnect()
 @connect(
@@ -15,11 +16,14 @@ class RoomList extends Component {
         redirect: false
     };
 
+
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
             this.setState({
                 redirect: true
             })
+        } else {
+            let socket = SocketIOClient('http://localhost:3000');
         }
     }
 
