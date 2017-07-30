@@ -21,13 +21,15 @@ class Login extends Component {
         pw: '',
         regMode: false,
         redirect: false,
-        selectedOption: 'email'
+        selectedOption: 'email',
+        uid: ''
     };
 
     componentWillReceiveProps ({ auth }) {
         if (auth) {
             this.setState({
-                redirect: true
+                redirect: true,
+                uid: auth.uid
             })
         }
     }
@@ -82,7 +84,7 @@ class Login extends Component {
     render() {
         if(this.state.redirect) {
             return (
-                <Redirect to="/" />
+                <Redirect to={`/roomList/${this.state.uid}`} />
             )
         }
         const inputBox = (
