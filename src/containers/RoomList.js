@@ -1,16 +1,15 @@
 import React, { Component } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase'
-import SocketIOClient from 'socket.io-client';
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 
 @firebaseConnect([
-    'room/RoomList'
+    'roomList'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
-        todos: dataToJS(firebase, 'room/RoomList')
+        roomList: dataToJS(firebase, 'roomList')
     })
 )
 
@@ -18,7 +17,6 @@ class RoomList extends Component {
     state = {
         redirect: false
     };
-    socket = SocketIOClient('http://localhost:3000');
 
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
@@ -26,7 +24,7 @@ class RoomList extends Component {
                 redirect: true
             })
         } else {
-            this.socket.emit('joinroom',{user:auth.uid});
+            //this.socket.emit('joinroom',{user:auth.uid});
         }
     }
 
@@ -51,10 +49,31 @@ class RoomList extends Component {
             )
         }
 
+        let mapToList = (data) => {
+            if(data !== undefined) {
+                return Object.keys(data).map((key, index) => {
+                    return (
+                        <li key={key}>
+                            <Link to={`/roomView/${key}`}>
+                                <span>idx : {index}</span>
+                                <h5>방이름 / {data[key].roomName}</h5>
+                                <p>ID / {data[key].masterID}</p>
+                                <p>방장 / {data[key].masterName}</p>
+                            </Link>
+                        </li>
+                    );
+                });
+            }
+        };
+
+
         return (
             <div>
                 ROOM LIST
                 <button onClick={this.logout}>LOGOUT</button>
+                <ul>
+                    {mapToList(this.props.roomList)}
+                </ul>
                 <div>
                     <div>
                         roomName : <input type="text"/>
