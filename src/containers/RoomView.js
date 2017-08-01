@@ -1,10 +1,43 @@
 import React, { Component } from 'react';
-import {convertDate} from '../commonJS/Util';
+import { Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
 import ChatList from '../components/ChatList';
-
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 import SocketIOClient from 'socket.io-client';
+import {convertDate} from '../commonJS/Util';
+
+@firebaseConnect([
+    'roomList'
+])
+@connect(
+    ({ firebase }) => ({
+        auth: pathToJS(firebase, 'auth'),
+        roomList: dataToJS(firebase, 'roomList')
+    })
+)
 
 class App extends Component {
+    state = {
+        redirect: false
+    };
+
+
+    componentWillReceiveProps ({ auth }) {
+        if (auth === null) {
+            this.setState({
+                redirect: true
+            })
+        } else {
+            let socket = SocketIOClient('http://localhost:3000');
+            socket.emit('joinroom',{
+                roomID: this.props.match.params.user,
+                user: auth
+            });
+        }
+    }
+
+
+    /*
     constructor(props) {
         super(props);
 
@@ -96,8 +129,13 @@ class App extends Component {
 
         // { this.state.isChangedNickname && `${this.state.nickname}으로 변경 했습니다`}
     }
-
+*/
     render() {
+        if(this.state.redirect) {
+            return (
+                <Redirect to="/Login" />
+            )
+        }
 
         return (
               <div className="App">
@@ -108,10 +146,7 @@ class App extends Component {
 
 
                   <div id="messages">
-                      <ChatList
-                          socket={this.socket}
-                          state={this.state}
-                      />
+       <button onClick={this.getOut}>방탈출</button>
                   </div>
 
                   <form action="" onSubmit={this.handleSubmit}>
