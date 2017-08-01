@@ -14,8 +14,31 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 
+let nsp = io.of('/roomView');
+
+nsp.on('connection', function(socket){
+    // 대화방 참석
+    socket.on('joinroom',function(data){
+        socket.join(data.roomID);
+
+        // 접속자 닉네임
+        socket.email = data.user.email;
+
+        console.log(socket.email)
+    });
+
+
+    // 대화방 나가기
+    socket.on('disconnect', (data) => {
+        console.log('room OUT!', data);
+        /*if(data[nickname] !== undefined) {
+            delete data[nickname];
+        }*/
+    });
+});
 
 // 소켓연결
+/*
 io.sockets.on('connection',function(socket){
     console.log(socket.id)
     // 대화방 참석
@@ -31,11 +54,12 @@ io.sockets.on('connection',function(socket){
     // 대화방 나가기
     socket.on('disconnect', (data) => {
         console.log('room OUT!', data)
-        /*if(data[nickname] !== undefined) {
+        /!*if(data[nickname] !== undefined) {
          delete data[nickname];
-         }*/
+         }*!/
     });
 });
+*/
 
 // Server ON:3500
 server.listen(3500, () => console.log('listening on *:3500'));

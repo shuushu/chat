@@ -6,33 +6,51 @@ import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 import SocketIOClient from 'socket.io-client';
 import {convertDate} from '../commonJS/Util';
 
-@firebaseConnect([
-    'roomList'
-])
-@connect(
-    ({ firebase }) => ({
-        auth: pathToJS(firebase, 'auth'),
-        roomList: dataToJS(firebase, 'roomList')
-    })
-)
+ @firebaseConnect((props, firebase) => {
+
+console.log(props, pathToJS(firebase, 'roomView'))
+     //return ['roomView/' + props.match.params.user]
+ })
+
+ @connect(
+    ({ firebase }) => {
+        return ({
+            auth: pathToJS(firebase, 'auth'),
+            roomView: dataToJS(firebase, 'roomView')
+        })
+    }
+ )
+
+
 
 class App extends Component {
     state = {
-        redirect: false
+        redirect: false,
+        roomListRedirect: false
     };
+    socket = SocketIOClient('/roomView');
 
 
-    componentWillReceiveProps ({ auth }) {
+    componentWillReceiveProps ({ auth, roomView }) {
         if (auth === null) {
             this.setState({
                 redirect: true
             })
         } else {
-            let socket = SocketIOClient('http://localhost:3000');
-            socket.emit('joinroom',{
+            console.log(roomView)
+            for(let i in roomView){
+                // Redux에 데이터가 없을때
+                if(roomView[i] === null) {
+                    this.setState({
+                        roomListRedirect: true
+                    })
+                }
+            }
+
+           /* this.socket.emit('joinroom',{
                 roomID: this.props.match.params.user,
                 user: auth
-            });
+            });*/
         }
     }
 
@@ -134,6 +152,12 @@ class App extends Component {
         if(this.state.redirect) {
             return (
                 <Redirect to="/Login" />
+            )
+        }
+
+        if(this.state.roomListRedirect) {
+            return (
+                <Redirect to="/roomList" />
             )
         }
 
