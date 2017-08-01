@@ -15,31 +15,25 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 
 
 
-var socket_ids = [];
-var count = 0;
- 
-function registerUser(socket,nickname){
-    // socket_id와 nickname 테이블을 셋업
-    socket.get('nickname',function(err,pre_nick){
-        if(pre_nick != undefined ) delete socket_ids[pre_nick];
-        socket_ids[nickname] = socket.id
-        socket.set('nickname',nickname,function(){
-            io.sockets.emit('userlist',{users:Object.keys(socket_ids)});
-        });
- 
-    });
-}
-
-app.get('/roomList/:user',function(req,res){
-    console.log('room name is :'+req.params.room);
-    res.render('index',{room:req.params.room});
-});
-
-
 // 소켓연결
 io.sockets.on('connection',function(socket){
-	socket.on('joinroom',function(data){
-        socket.join(data.user);
+    console.log(socket.id)
+    // 대화방 참석
+    socket.on('joinroom',function(data){
+        socket.join(data.roomID);
+
+        // 접속자 닉네임
+        socket.email = data.user.email;
+
+
+
+    });
+    // 대화방 나가기
+    socket.on('disconnect', (data) => {
+        console.log('room OUT!', data)
+        /*if(data[nickname] !== undefined) {
+         delete data[nickname];
+         }*/
     });
 });
 
