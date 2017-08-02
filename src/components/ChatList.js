@@ -2,47 +2,32 @@ import React, { Component } from 'react';
 import {convertDate} from '../commonJS/Util';
 
 class ChatList extends Component {
-    constructor(props) {
-        super(props);
+    componentWillReceiveProps () {
 
-    }
-
-    componentDidMount() {
     }
 
     render() {
-        let {msgArr, id} = this.props.state;
+        let mapToList = () => {
+            if(this.props.data !== null) {
+                let msgData = this.props.data.message;
 
-        const systemMsg = (data) => (
-            <diV className="systemMsg">
-                {data.old}님이 닉네임을 {data.current}로 변경했습니다.
-            </diV>
-        );
+                return Object.keys(msgData).map((key, index) => {
+                    return (
+                        <div key={key}>
+                            <span>{msgData.user}</span>
+                           {msgData[key].sendMsg}
+                        </div>
+                    );
+                });
+            }
+        };
 
-        const defaultMsg = (data, idx) => {
-            return (
-                <div key={idx} className={data.user === id ? 'list myChat' : 'list'} >
-                    <div>
-                        <strong>{data.nickname}</strong>
-                    </div>
-                    <span>{data.sendMsg}</span>
-                    <time dateTime={data.time}>{convertDate("a/p hh:mm")}</time>
-                </div>
-            );
-        }
 
-        const mapToList =  msgArr.map((data, idx) => {
-            return (
-                <div>
-                    {data.type === 'system' ?  systemMsg(data) : defaultMsg(data, idx)}
-                </div>
 
-            )
-        });
 
         return (
             <div>
-                {mapToList}
+                {mapToList()}
             </div>
         );
     }
