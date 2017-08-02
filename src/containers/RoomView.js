@@ -40,19 +40,11 @@ class App extends Component {
                         ieEmpty: true
                     })
                 } else {
-                    console.log(this.props.socket.connected)
-                    // console.log(this.props.socket)
                     this.props.socket.emit('joinroom',{
                         roomID: this.props.rpath.match.params.user,
                         user: auth
                      });
 
-                    this.props.socket.on('toClient', (data) => {
-                        this.saveMsg(data)
-                    });
-                    this.props.socket.on('toNick', (data) => {
-                        this.saveMsg(data)
-                    });
 
                     this.setState({
                         roomViewData: roomView[this.props.rpath.match.params.user]
@@ -62,18 +54,11 @@ class App extends Component {
         }
     }
 
-
     saveMsg = ( props ) => {
         let URL = '/roomView/' + this.props.rpath.match.params.user + '/message';
-        this.props.firebase.push(URL, props)
-        //this.props.firebase.push({ some: 'data' });
-
-
-        /*const temp = this.state.msgArr;
-        temp.push(data);
-
-        this.setState({ msgArr: temp });*/
+        this.props.firebase.push(URL, props);
     };
+
     // input TEXT
     handleChange = (e) => {
         this.setState({
@@ -99,6 +84,7 @@ class App extends Component {
         });
 
         this.props.socket.emit('message', message);
+        this.saveMsg(message)
 
         this.setState({
             latestMsg: ''
@@ -120,10 +106,7 @@ class App extends Component {
                 </div>
             )
         }
-       {/* <ChatList
-            socket={this.socket}
-            state={this.state}
-        />*/}
+
         return (
               <div className="App">
                   <div id="messages">
@@ -141,8 +124,6 @@ class App extends Component {
                             </button>
                       </form>
                   </div>
-
-
               </div>
         );
     }
