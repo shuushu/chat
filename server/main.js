@@ -28,6 +28,16 @@ nsp.on('connection', function(socket){
     });
 
 
+    // 메세지 송수신
+    socket.on('message', (data) => {
+        console.log(data);
+        // 자신을 제외하고 다른 클라이언트에게 보냄
+        socket.broadcast.emit('toClient', data);
+        // 해당 클라이언트에게만 보냄. 다른 클라이언트에 보낼려면?
+        socket.emit('toClient', data);
+    });
+
+
     // 대화방 나가기
     socket.on('disconnect', (data) => {
         console.log('room OUT!', data);
