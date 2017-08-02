@@ -1,0 +1,12 @@
+.msgSendForm{
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.msgSendForm .waves-effect{
+  position: absolute;
+  right:0;
+  top: 0;
+}
