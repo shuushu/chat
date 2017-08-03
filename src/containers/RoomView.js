@@ -1,21 +1,20 @@
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import ChatList from '../components/ChatList';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS, isEmpty } from 'react-redux-firebase';
 
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
-    return [{ path: 'roomView/' + props.rpath.match.params.user }]
+    return [{ path: 'rooms/' + props.rpath.match.params.user }]
 })
 
 @connect(
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            roomView: dataToJS(firebase, 'roomView')
+            roomView: dataToJS(firebase, 'rooms')
         })
     }
 )
@@ -55,8 +54,7 @@ class App extends Component {
     }
 
     saveMsg = ( props ) => {
-        let URL = '/roomView/' + this.props.rpath.match.params.user + '/message';
-        this.props.firebase.push(URL, props);
+
     };
 
     // input TEXT
@@ -77,14 +75,16 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
 
         const message = Object.assign({
-            user: '슈슈',
+            user: this.props.auth.email,
             sendMsg: this.state.latestMsg,
             time: currentTime,
             seq: convertDate('yymmddhhmmss')
         });
 
         this.props.socket.emit('message', message);
-        this.saveMsg(message)
+
+        let URL = '/rooms/' + this.props.rpath.match.params.user + '/message';
+        this.props.firebase.push(URL, message);
 
         this.setState({
             latestMsg: ''
@@ -99,18 +99,35 @@ class App extends Component {
         }
 
         if(this.state.ieEmpty) {
+            alert('개설된 방이 없음');
+
             return (
-                <div>
-                    개설된 방 없음
-                    <Link to="/">돌아가기</Link>
-                </div>
+                <Redirect to="/RoomList" />
             )
         }
+
+        let mapToList = (listData) => {
+            if(listData !== null) {
+                let msgData = listData.message;
+
+                return Object.keys(msgData).map((key) => {
+                    if (msgData[key].user === this.props.auth.email) {
+
+                    }
+                    return (
+                        <div key={key} className={msgData[key].user === this.props.auth.email ? 'mine' : 'list'}>
+                            <em>{msgData[key].user}</em>
+                            / {msgData[key].sendMsg}
+                        </div>
+                    );
+                });
+            }
+        };
 
         return (
               <div className="App">
                   <div id="messages">
-                      <ChatList data={this.state.roomViewData} />
+                      {mapToList(this.state.roomViewData)}
                   </div>
 
                   <div className="msgSendForm">
