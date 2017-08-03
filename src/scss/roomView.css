@@ -10,3 +10,10 @@
   right:0;
   top: 0;
 }
+#messages .list{
+  text-align: left
+
+}
+#messages .mine{
+  text-align: right;
+}
