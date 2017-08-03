@@ -4,18 +4,19 @@ import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 
 @firebaseConnect([
-    'roomList'
+    'rooms'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
-        roomList: dataToJS(firebase, 'roomList')
+        roomList: dataToJS(firebase, 'rooms')
     })
 )
 
 class RoomList extends Component {
     state = {
-        redirect: false
+        redirect: false,
+        latestMsg: ''
     };
 
     componentWillReceiveProps ({ auth }) {
@@ -23,23 +24,34 @@ class RoomList extends Component {
             this.setState({
                 redirect: true
             })
-        } else {
-            //this.socket.emit('joinroom',{user:auth.uid});
         }
     }
 
     logout = () => {
         this.props.firebase.logout();
-        this.socket.on('connection', function(socket){
-            socket.join('some room');
-        });
     };
 
+    // 방 만들기
     handleAdd = (e) => {
         e.preventDefault();
-        this.props.firebase.push('/room/RoomList',{
-           roonName: '룸이름'
+        this.props.firebase.push('/rooms',{
+            roomName: this.state.latestMsg,
+            master: this.props.auth.email,
+            message: 0
         });
+
+        this.setState({ latestMsg: '' });
+    };
+    // 방 삭제
+    handleDelete = (key) => {
+        this.props.firebase.remove('/rooms/' + key);
+    };
+
+    // input TEXT
+    handleChange = (e) => {
+        this.setState({
+            latestMsg: e.target.value
+        })
     };
 
     render() {
@@ -52,14 +64,19 @@ class RoomList extends Component {
         let mapToList = (data) => {
             if(data !== undefined) {
                 return Object.keys(data).map((key, index) => {
+                    if(data[key] === null) {
+                        return false;
+                    }
                     return (
                         <li key={key}>
                             <Link to={`/roomView/${key}`}>
                                 <span>idx : {index}</span>
                                 <h5>방이름 / {data[key].roomName}</h5>
-                                <p>ID / {data[key].masterID}</p>
-                                <p>방장 / {data[key].masterName}</p>
+                                <p>방장 / {data[key].master}</p>
                             </Link>
+                            <a className="btn-floating btn-large waves-effect waves-light blue" >
+                                <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
+                            </a>
                         </li>
                     );
                 });
@@ -76,11 +93,14 @@ class RoomList extends Component {
                 </ul>
                 <div>
                     <div>
-                        roomName : <input type="text"/>
+                        roomName :
+                        <input type="text"
+                               value={this.state.latestMsg}
+                               onChange={this.handleChange}
+                        />
                     </div>
-
-                    <button onClick={this.handleAdd}>
-                        CREATE ROOM
+                    <button className="waves-effect waves-light btn" onClick={this.handleAdd} >
+                        <i className="material-icons right">add</i>CREATE ROOM
                     </button>
                 </div>
             </div>
