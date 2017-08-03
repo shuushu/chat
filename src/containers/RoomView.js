@@ -53,10 +53,6 @@ class App extends Component {
         }
     }
 
-    saveMsg = ( props ) => {
-
-    };
-
     // input TEXT
     handleChange = (e) => {
         this.setState({
@@ -111,11 +107,9 @@ class App extends Component {
                 let msgData = listData.message;
 
                 return Object.keys(msgData).map((key) => {
-                    if (msgData[key].user === this.props.auth.email) {
-
-                    }
                     return (
                         <div key={key} className={msgData[key].user === this.props.auth.email ? 'mine' : 'list'}>
+                            {listData.master === msgData[key].user && (<span>★</span>)}
                             <em>{msgData[key].user}</em>
                             / {msgData[key].sendMsg}
                         </div>

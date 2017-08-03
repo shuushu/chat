@@ -16,6 +16,10 @@ import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 class RoomList extends Component {
     state = {
         redirect: false,
+        isCreate: {
+            created: false,
+            url: null
+        },
         latestMsg: ''
     };
 
@@ -34,13 +38,21 @@ class RoomList extends Component {
     // 방 만들기
     handleAdd = (e) => {
         e.preventDefault();
+
         this.props.firebase.push('/rooms',{
             roomName: this.state.latestMsg,
             master: this.props.auth.email,
+            join: [ ],
             message: 0
+        }).then((data)=>{
+            this.setState({
+                latestMsg: '',
+                isCreate: {
+                    created: true,
+                    url: data.path.o[1]
+                }
+            });
         });
-
-        this.setState({ latestMsg: '' });
     };
     // 방 삭제
     handleDelete = (key) => {
@@ -58,6 +70,11 @@ class RoomList extends Component {
         if(this.state.redirect) {
             return (
                 <Redirect to="/Login" />
+            )
+        }
+        if(this.state.isCreate.created) {
+            return (
+                <Redirect to={`/roomView/${this.state.isCreate.url}`} />
             )
         }
 
