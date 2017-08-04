@@ -42,7 +42,7 @@ class RoomList extends Component {
         this.props.firebase.push('/rooms',{
             roomName: this.state.latestMsg,
             master: this.props.auth.email,
-            join: [ ],
+            join: [ this.props.auth.email ],
             message: 0
         }).then((data)=>{
             this.setState({
@@ -56,7 +56,12 @@ class RoomList extends Component {
     };
     // 방 삭제
     handleDelete = (key) => {
-        this.props.firebase.remove('/rooms/' + key);
+        if(this.props.auth.email === this.props.roomList[key].master){
+            this.props.firebase.remove('/rooms/' + key);
+        } else {
+            alert('권한이 없습니다.');
+            return false;
+        }
     };
 
     // input TEXT
