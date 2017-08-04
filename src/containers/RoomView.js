@@ -7,7 +7,9 @@ import { firebaseConnect, pathToJS, dataToJS, isEmpty } from 'react-redux-fireba
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
-    return [{ path: 'rooms/' + props.rpath.match.params.user }]
+    return [
+        { path: 'rooms/' + props.rpath.match.params.user, queryParams: [ 'orderByChild=message' ]}
+    ]
 })
 
 @connect(
@@ -33,6 +35,29 @@ class App extends Component {
                 redirect: true
             })
         } else {
+            // 한번만 실행됨
+            if(this.props.roomView !== undefined) {
+                let path = this.props.rpath.match.params.user;
+                let joinArr = this.props.roomView[path].join;
+                let flag = true;
+
+                joinArr.map((joinEmail) => {
+                    if( joinEmail === this.props.auth.email) {
+                        flag = false;
+                    }
+                });
+                // 첫방문시 join에 방문자 추가
+                if(flag) {
+                   this.props.firebase.set('rooms/' + this.props.rpath.match.params.user + '/join/' + joinArr.length, this.props.auth.email);
+                }
+
+                this.setState({
+                    roomViewData: roomView[this.props.rpath.match.params.user]
+                });
+            }
+
+
+
             if(roomView !== undefined) {
                 if(isEmpty(roomView[this.props.rpath.match.params.user])) {
                     this.setState({
@@ -43,11 +68,6 @@ class App extends Component {
                         roomID: this.props.rpath.match.params.user,
                         user: auth
                      });
-
-
-                    this.setState({
-                        roomViewData: roomView[this.props.rpath.match.params.user]
-                    });
                 }
             }
         }
@@ -67,9 +87,14 @@ class App extends Component {
             alert('메세지를 입력하세요');
             return false;
         }
+        // 방에 혼자 있을경우
+        if(this.state.roomViewData.join.length < 2) {
+            /*alert('대화 상대가 없습니다.');
+            this.setState({ latestMsg: '' });
+            return false;*/
+        }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
-
         const message = Object.assign({
             user: this.props.auth.email,
             sendMsg: this.state.latestMsg,
@@ -80,11 +105,9 @@ class App extends Component {
         this.props.socket.emit('message', message);
 
         let URL = '/rooms/' + this.props.rpath.match.params.user + '/message';
-        this.props.firebase.push(URL, message);
+        let postKey = this.props.firebase.push(URL, message).key;
 
-        this.setState({
-            latestMsg: ''
-        })
+        this.setState({ latestMsg: '' })
     };
 
     render() {
@@ -102,6 +125,16 @@ class App extends Component {
             )
         }
 
+
+        // Redux Props에서 state로 전달이 되면 실행
+        let getMember = () => {
+            let { join } = this.state.roomViewData;
+
+            return join.map((email, idx) => {
+                return (<span key={`room${idx}`} > ○ {email}</span>);
+            });
+        };
+
         let mapToList = (listData) => {
             if(listData !== null) {
                 let msgData = listData.message;
@@ -112,14 +145,23 @@ class App extends Component {
                             {listData.master === msgData[key].user && (<span>★</span>)}
                             <em>{msgData[key].user}</em>
                             / {msgData[key].sendMsg}
+                            <p>
+                                <strong>{msgData[key].time}</strong>
+                            </p>
+
                         </div>
                     );
                 });
             }
         };
-
+        //{getMember(this.state.roomViewData)}
         return (
               <div className="App">
+                  <div>
+                      참여인원:
+                      { this.state.roomViewData !== null && getMember() }
+                  </div>
+                  <hr/>
                   <div id="messages">
                       {mapToList(this.state.roomViewData)}
                   </div>
