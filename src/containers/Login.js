@@ -48,6 +48,8 @@ class Login extends Component {
     };
     // 로그인
     signIn = (event) => {
+        event.preventDefault();
+
         let credentials = {
             email: this.state.id,
             password: this.state.pw,
@@ -66,10 +68,17 @@ class Login extends Component {
     signUp = (event) => {
         event.preventDefault();
 
-        firebase.auth().createUserWithEmailAndPassword(this.state.id, this.state.pw)
-            .catch(function(error) {
-                console.log(error.code , error.message);
-            });
+        this.props.firebase.createUser(
+            {
+                email: this.state.id,
+                password: this.state.pw,
+                signIn: true
+            },
+            {
+                username: 'nick1',
+                imgs: 'http://lorempixel.com/200/200/?111'
+            }
+        );
     };
 
     handleChange = (e) => {
