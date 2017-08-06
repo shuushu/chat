@@ -16,30 +16,31 @@ componentDidMount() {
   socket.emit('joinroom',{room: this.props.match.params.userName});
 }
 ```
+### 종료
+1) 로그인 개발
 
-### 시나리오
+2) 회원가입 (email, google만 연동)
 
-1) 로그인 ? 채팅리스트 진입 : member add
-- [로그인세션](https://velopert.com/1967)
-- [express세션](https://velopert.com/406)
+3) 주소 입력으로 이동 > 비로그인시 로그인 화면으로 이동
 
-1-1) 로그인 성공후 채팅리스트 진입시 socket 연결
+4) roomList 기본 frame 구성
 
-1-2) url입력으로 채팅리스트에 들어올 경우 redirect(login응답 구분)
+5) 채팅방 생성 후 바로 채팅 룸으로 이동
 
-- [redux-pender](https://velopert.com/3401#2-3-redux-promise-middleware)
-```
-프로미스 기반 액션들을 관리하기 위한 미들웨어와 도구가 포함되어있는 라이브러리
-```
-- [redux-actions](https://velopert.com/3358)
-- [Provider](https://velopert.com/1266)
-```
-렌더링 될 때 Redux 컴포넌트인 <Provider> 에 store 를 설정해주면 그 하위 컴포넌트들에 따로 parent-child 구조로 전달해주지 않아도 connect 될 때 store에 접근 할 수 있게 해줍니다
-```
+6) 메세지 주고 받기
 
-2) 채팅룸 initialize member 
-3) 룸리스트 ? 채널에 1개라도 룸리스트가 있으면 보여줌 : 채널에 첫 접속자가 방을만듦
-4) RoomList / socketID별 채팅방 구현
+7) 메세지 입력시 현재 접속한 멤버에게만 보여주기
 
-### 이슈
+
+
+
+### Todo-list
+1) 방에 join 후 다른 방으로 이동시 tost 알림 받기
+
+
+
+### 이슈노트
+
+- [진행중 이슈](https://github.com/shuushu/chat/issues?q=is%3Aopen+is%3Aissue)
+- [종료된 이슈](https://github.com/shuushu/chat/issues?q=is%3Aissue+is%3Aclosed)
 

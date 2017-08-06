@@ -3,12 +3,13 @@ import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS, isEmpty } from 'react-redux-firebase';
+import update from 'react-addons-update';
 
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
     return [
-        { path: 'rooms/' + props.rpath.match.params.user, queryParams: [ 'orderByChild=message' ]}
+        { path: 'rooms/' + props.rpath.match.params.user }
     ]
 })
 
@@ -26,7 +27,10 @@ class App extends Component {
         redirect: false,
         ieEmpty: false,
         roomViewData: null,
-        latestMsg: ''
+        latestMsg: '',
+        test: {
+            msg: [2122]
+        }
     };
 
     componentWillReceiveProps ({ auth, roomView }) {
@@ -89,9 +93,9 @@ class App extends Component {
         }
         // 방에 혼자 있을경우
         if(this.state.roomViewData.join.length < 2) {
-            /*alert('대화 상대가 없습니다.');
+            alert('대화 상대가 없습니다.');
             this.setState({ latestMsg: '' });
-            return false;*/
+            return false;
         }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
@@ -99,15 +103,26 @@ class App extends Component {
             user: this.props.auth.email,
             sendMsg: this.state.latestMsg,
             time: currentTime,
-            seq: convertDate('yymmddhhmmss')
+            seq: convertDate('yymmddhhmmss'),
+            listener: this.state.roomViewData.join
         });
 
         this.props.socket.emit('message', message);
 
-        let URL = '/rooms/' + this.props.rpath.match.params.user + '/message';
-        let postKey = this.props.firebase.push(URL, message).key;
+        this.setState({
+            roomViewData: update(
+                this.state.roomViewData, {
+                    message: {
+                        $push: [message]
+                    }
+                }
+            )
+        }, () => {
+            let URL = '/rooms/' + this.props.rpath.match.params.user + '/message';
 
-        this.setState({ latestMsg: '' })
+            this.props.firebase.set(URL, this.state.roomViewData.message);
+            this.setState({ latestMsg: '' });
+        });
     };
 
     render() {
@@ -139,22 +154,31 @@ class App extends Component {
             if(listData !== null) {
                 let msgData = listData.message;
 
-                return Object.keys(msgData).map((key) => {
-                    return (
-                        <div key={key} className={msgData[key].user === this.props.auth.email ? 'mine' : 'list'}>
-                            {listData.master === msgData[key].user && (<span>★</span>)}
-                            <em>{msgData[key].user}</em>
-                            / {msgData[key].sendMsg}
-                            <p>
-                                <strong>{msgData[key].time}</strong>
-                            </p>
+                return msgData.map((data, idx) => {
+                    // 메세지만 렌더링
+                    if(typeof data !== 'object') {
+                        return false;
+                    }
+                    // 채팅 입력시 현재 참여인원에게만 메세지를 보여준다
+                    for(let i in data.listener) {
+                        if(data.listener[i] === this.props.auth.email) {
+                            return (
+                                <div key={`key${idx}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
+                                    {listData.master === data.user && (<span>★</span>)}
+                                    <em>{data.user}</em>
+                                    / {data.sendMsg}
+                                    <p>
+                                        <strong>{data.time}</strong>
+                                    </p>
 
-                        </div>
-                    );
+                                </div>
+                            );
+                        }
+                    }
                 });
             }
         };
-        //{getMember(this.state.roomViewData)}
+
         return (
               <div className="App">
                   <div>

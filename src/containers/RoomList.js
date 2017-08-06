@@ -43,7 +43,7 @@ class RoomList extends Component {
             roomName: this.state.latestMsg,
             master: this.props.auth.email,
             join: [ this.props.auth.email ],
-            message: 0
+            message: [1]
         }).then((data)=>{
             this.setState({
                 latestMsg: '',
