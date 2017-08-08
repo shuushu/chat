@@ -37,7 +37,8 @@ componentDidMount() {
 ### Todo-list
 1) 방에 join 후 다른 방으로 이동시 tost 알림 받기
 
-
+### ERD
+![ERD](http://postfiles14.naver.net/MjAxNzA4MDlfNDcg/MDAxNTAyMjA2NTQ4OTEy.-azxXWHErNmeqtTO97YmeVgy6Adbsi14A7dE7ZGyyjAg.h77ONIJ8OjEwTGhqsZaAdmRKVe3qtOeuEyM9HhWKg9sg.JPEG.efu0128/erd.jpg?type=w3)
 
 ### 이슈노트
 
