@@ -35,7 +35,15 @@ componentDidMount() {
 
 
 ### Todo-list
-1) 방에 join 후 다른 방으로 이동시 tost 알림 받기
+1) 시나리오 변경
+
+as-is
+로그인 후 > 채팅룸 리스트
+
+to-be
+로그인 후 > 채팅룸 리스트 방이 있는지 판단 (false) 유저 리스트, (true) 채팅룸 > join > 채팅방 생성
+
+
 
 
 
