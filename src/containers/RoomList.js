@@ -4,12 +4,12 @@ import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 
 @firebaseConnect([
-    'rooms'
+    'room'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
-        roomList: dataToJS(firebase, 'rooms')
+        roomList: dataToJS(firebase, 'room')
     })
 )
 
@@ -22,6 +22,9 @@ class RoomList extends Component {
         },
         latestMsg: ''
     };
+    componentDidMount() {
+        console.log(this.state)
+    }
 
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
@@ -39,20 +42,37 @@ class RoomList extends Component {
     handleAdd = (e) => {
         e.preventDefault();
 
-        this.props.firebase.push('/rooms',{
+        // 룸정보 저장
+        let roomID = this.props.firebase.push('/room', {
             roomName: this.state.latestMsg,
-            master: this.props.auth.email,
-            join: [ this.props.auth.email ],
-            message: [1]
-        }).then((data)=>{
-            this.setState({
-                latestMsg: '',
-                isCreate: {
-                    created: true,
-                    url: data.path.o[1]
-                }
-            });
+            master: this.props.auth.email
+        }).key;
+
+        // join 테이블 저장
+        this.props.firebase.push('/join', {
+            roomID: roomID,
+            user: this.props.firebase.auth().currentUser.uid,
+            fav : true,
+            alarm: true
         });
+
+        /* 검색
+        this.props.firebase.ref('/join').on('value', (snapshot) => {
+            let data = snapshot.val();
+
+            if(data === null) {
+                data = {}
+            }
+
+            data[roomID] = {
+                fav : true,
+                alarm: true
+            };
+
+            console.log(data);
+        });*/
+
+        //console.log(roomID);
     };
     // 방 삭제
     handleDelete = (key) => {
@@ -84,7 +104,7 @@ class RoomList extends Component {
         }
 
         let mapToList = (data) => {
-            if(data !== undefined) {
+            if(data !== null) {
                 return Object.keys(data).map((key, index) => {
                     if(data[key] === null) {
                         return false;
@@ -111,7 +131,7 @@ class RoomList extends Component {
                 ROOM LIST
                 <button onClick={this.logout}>LOGOUT</button>
                 <ul>
-                    {mapToList(this.props.roomList)}
+                    {this.props.roomList !== undefined && mapToList(this.props.roomList)}
                 </ul>
                 <div>
                     <div>

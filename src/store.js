@@ -17,7 +17,7 @@ firebase.initializeApp(fbConfig);
 const config = {
   userProfile: 'users', // firebase root where user profiles are stored
   enableLogging: false, // enable/disable Firebase's database logging
-}
+};
 
 const createStoreWithFirebase = compose(
   reduxFirebase(fbConfig, config),

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+import { convertDate } from '../commonJS/Util';
 // UI
-import firebase from 'firebase';
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
@@ -21,7 +21,6 @@ class Login extends Component {
         pw: '',
         regMode: false,
         redirect: false,
-        selectedOption: 'email',
         uid: ''
     };
 
@@ -33,13 +32,6 @@ class Login extends Component {
             })
         }
     }
-    // 로그인 방법
-    handleCheckRadio = (changeEvent) => {
-        this.setState({
-            selectedOption: changeEvent.target.value
-        });
-    };
-
     // 로그인 / 회원가입 모드 변경
     handleChangeMode = () => {
         this.setState({
@@ -55,8 +47,8 @@ class Login extends Component {
             password: this.state.pw,
         };
 
-        if(this.state.selectedOption !== 'email') {
-            credentials.provider = this.state.selectedOption;
+        if(event.target.id !== 'email') {
+            credentials.provider = event.target.id;
             credentials.type = 'popup';
         }
 
@@ -75,8 +67,16 @@ class Login extends Component {
                 signIn: true
             },
             {
-                username: 'nick1',
-                imgs: 'http://lorempixel.com/200/200/?111'
+                avatarUrl: "http://lorempixel.com/120/120/?1",
+                displayName: "슈슈",
+                email: this.state.id,
+                providerData: [{
+                    displayName: "슈슈",
+                    email: this.state.id,
+                    photoURL: "http://lorempixel.com/120/120/?1",
+                    providerId: "email",
+                    uid: convertDate('yymmddhhmmss')
+                }]
             }
         );
     };
@@ -120,35 +120,18 @@ class Login extends Component {
                 <div className="card-content">
                     <div className="row">
                         { inputBox }
-                        <div>
-                            <input id="ico_email" name="loginProvider" type="radio"
-                                   value="email"
-                                   onChange={this.handleCheckRadio}
-                                   checked={this.state.selectedOption === 'email'}
-                            />
-                            <label htmlFor="ico_email">
-                                email
-                            </label>
+                        <button id="email" className="waves-effect waves-light btn" onClick={this.signIn} >SUBMIT</button>
 
-                            <input id="ico_google" name="loginProvider" type="radio"
-                                   value="google"
-                                   onChange={this.handleCheckRadio}
-                                   checked={this.state.selectedOption === 'google'}
-                            />
-                            <label htmlFor="ico_google">
-                                google
-                            </label>
+                        <button id="google" className="waves-effect waves-light btn" onClick={this.signIn} >
+                            Google
+                            <i className="material-icons right">filter_drama</i>
+                        </button>
 
-                            <input id="ico_facebook" name="loginProvider" type="radio"
-                                   value="facebook"
-                                   onChange={this.handleCheckRadio}
-                                   checked={this.state.selectedOption === 'facebook'}
-                            />
-                            <label htmlFor="ico_facebook">
-                                facebook
-                            </label>
-                        </div>
-                        <button className="waves-effect waves-light btn" onClick={this.signIn} >SUBMIT</button>
+                        <button id="facebook"  className="waves-effect waves-light btn" onClick={this.signIn} >
+                            facebook
+                            <i className="material-icons right">thumb_up</i>
+                        </button>
+
                     </div>
                 </div>
                 <div className="footer">
