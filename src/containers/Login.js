@@ -8,10 +8,10 @@ import 'materialize-css/dist/js/materialize.min';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
 
 
-@firebaseConnect()
+@firebaseConnect(['users'])
 @connect(
   ({ firebase }) => ({
-    auth : pathToJS(firebase, 'auth')
+      auth : pathToJS(firebase, 'auth')
   })
 )
 
@@ -21,6 +21,7 @@ class Login extends Component {
         pw: '',
         regMode: false,
         redirect: false,
+        isJoins: true,
         uid: ''
     };
 

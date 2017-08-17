@@ -2,34 +2,35 @@ import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+// UI
+import 'materialize-css/dist/css/materialize.min.css';
+import 'materialize-css/dist/js/materialize.min';
 
 @firebaseConnect([
-    'room'
+    'users', 'joins'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
-        roomList: dataToJS(firebase, 'room')
+        users: dataToJS(firebase, 'users'),
+        joins: dataToJS(firebase, 'joins')
     })
 )
 
 class RoomList extends Component {
     state = {
-        redirect: false,
+        isLogin: false,
         isCreate: {
             created: false,
             url: null
         },
         latestMsg: ''
     };
-    componentDidMount() {
-        console.log(this.state)
-    }
 
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
             this.setState({
-                redirect: true
+                isLogin: true
             })
         }
     }
@@ -92,7 +93,7 @@ class RoomList extends Component {
     };
 
     render() {
-        if(this.state.redirect) {
+        if(this.state.isLogin) {
             return (
                 <Redirect to="/Login" />
             )
@@ -125,10 +126,34 @@ class RoomList extends Component {
             }
         };
 
+        let mapToUserList = (data) => {
+console.log(this.props)
+            if(data !== undefined){
+                return Object.keys(data).map((key, index) => {
+                    return (
+                        <div key={key+index}>
+                            <input type="checkbox" id={key} />
+                            <label htmlFor={key}>
+                                <img src={data[key].avatarUrl} alt=""/>
+                                {data[key].displayName}
+                                {data[key].email}
+                            </label>
+                        </div>
+                    );
+                })
+            }
+        };
 
         return (
             <div>
-                ROOM LIST
+
+                {this.props.joins ? 'RoomList' :
+                    <form action="#">
+                        {mapToUserList(this.props.users)}
+                    </form>
+                }
+                <h3>ROOM LIST</h3>
+
                 <button onClick={this.logout}>LOGOUT</button>
                 <ul>
                     {this.props.roomList !== undefined && mapToList(this.props.roomList)}
