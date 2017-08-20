@@ -2,55 +2,80 @@ import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
-import update from 'react-addons-update';
+import update from 'react-addons-update'
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/userList.css';
 
 @firebaseConnect([
-    'users','profile'
+    'users'
 ])
 @connect(
     ({ firebase }) => ({
-        users: dataToJS(firebase, 'users'),
-        profile: pathToJS(firebase, 'profile')
+        profile: pathToJS(firebase, 'profile'),
+        member: pathToJS(firebase, 'ordered'),
     })
 )
 
 class UserList extends Component {
     state = {
-        member: []
+        handleChanged: [],
+        isCreate: false
     };
 
     handleChange = (e) => {
-        console.log(e.target.dataset.idx);
+        let idx = e.target.dataset.idx;
         this.setState({
-            member: update(
-                this.state.member,
-                {
+            handleChanged: update(
+                this.state.handleChanged, {
+                    [idx]: {
+                        $set: e.target.checked
+                    }
                 }
             )
-        })
+        }, () => {
+            let cnt = 0;
+            this.state.handleChanged.map((i)=>{
+                if(i) { cnt++ }
+            });
+
+            this.setState({
+                isCreate: (cnt > 0)
+            })
+        });
     };
+
+    createRoom = () => {
+        let handleChanged = this.state.handleChanged;
+        let user = this.props.member.users;
+
+        handleChanged.map((data,index)=>{
+            if(data) {
+                console.log(user[index])
+            }
+        });
+        // 룸생성 PK: ROOM ID, Join Members Array
+    };
+
 
     render() {
         let mapToUserList = (data) => {
             if(data !== undefined){
-                return Object.keys(data).map((key, index) => {
+                return data.users.map((user, index) => {
 
-                    if(data[key].email === this.props.profile.email) {
+                    if(user.email === this.props.profile.email) {
                         return true;
                     }
 
                     return (
-                        <li className="item" key={key+index}>
-                            <input type="checkbox" data-idx={index} onChange={this.handleChange} id={key} />
-                            <label htmlFor={key}>
-                                <img src={data[key].avatarUrl} className="thumb" alt={`${data[key].displayName} 썸네일`}/>
+                        <li className="item" key={user.key+index}>
+                            <input type="checkbox" data-idx={index} onChange={this.handleChange} id={user.key} />
+                            <label htmlFor={user.key}>
+                                <img src={user.avatarUrl} className="thumb" alt={`${user.displayName} 썸네일`}/>
                                 <div className="context">
-                                    <strong>{data[key].displayName}</strong>
-                                    {data[key].email}
+                                    <strong>{user.displayName}</strong>
+                                    {user.email}
                                 </div>
                             </label>
                         </li>
@@ -62,10 +87,10 @@ class UserList extends Component {
         return (
             <div className="userList">
                 <ul className="itemWrap">
-                    {mapToUserList(this.props.users)}
+                    {mapToUserList(this.props.member)}
                 </ul>
                 <footer className="foot">
-                    <button className="btn waves-effect waves-light" type="submit" name="action" onClick={this.createRoom} >
+                    <button className={`btn waves-effect waves-light ${!this.state.isCreate && 'disabled'}`} type="submit" name="action" onClick={this.createRoom} >
                         ROOM CREATE <i className="material-icons right">spa</i>
                     </button>
                 </footer>
