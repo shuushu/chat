@@ -1,0 +1,45 @@
+.itemWrap{
+  margin: 0;
+  padding: 0;
+}
+.item{
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid #efefef;}
+.item label{
+  display: block;
+  height: 50px;
+  overflow: hidden;
+}
+.item label::before{
+  top:50%;
+  margin-top: -9px;
+  left:5px
+}
+.item [type="checkbox"]:checked+label:before{
+  top:50%;
+  margin-top: -11px;
+  left:0
+}
+.item .context{
+  float: left;
+  padding-left: 10px;
+}
+.item .context strong{
+  display: block;
+}
+.item img{
+  width: 50px;
+  height:50px;
+  float: left;
+  border-radius: 30px;
+}
+
+.foot{
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+.foot button{
+  width: 100%;}

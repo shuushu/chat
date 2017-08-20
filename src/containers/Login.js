@@ -8,7 +8,7 @@ import 'materialize-css/dist/js/materialize.min';
 import { firebaseConnect, pathToJS } from 'react-redux-firebase'
 
 
-@firebaseConnect(['users'])
+@firebaseConnect()
 @connect(
   ({ firebase }) => ({
       auth : pathToJS(firebase, 'auth')
@@ -27,10 +27,11 @@ class Login extends Component {
 
     componentWillReceiveProps ({ auth }) {
         if (auth) {
-            this.setState({
+
+            /*this.setState({
                 redirect: true,
                 uid: auth.uid
-            })
+            })*/
         }
     }
     // 로그인 / 회원가입 모드 변경
