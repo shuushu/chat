@@ -9,7 +9,7 @@ import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
     return [
-        { path: 'rooms/' + props.rpath.match.params.user }
+        { path: 'room/' + props.rpath.match.params.user }
     ]
 })
 
@@ -17,7 +17,7 @@ import {convertDate} from '../commonJS/Util';
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            roomView: dataToJS(firebase, 'rooms')
+            roomView: dataToJS(firebase, 'room')
         })
     }
 )
@@ -52,7 +52,7 @@ class App extends Component {
                 });
                 // 첫방문시 join에 방문자 추가
                 if(flag) {
-                   this.props.firebase.set('rooms/' + this.props.rpath.match.params.user + '/join/' + joinArr.length, this.props.auth.email);
+                   this.props.firebase.set('room/' + this.props.rpath.match.params.user + '/join/' + joinArr.length, this.props.auth.email);
                 }
 
                 this.setState({
@@ -118,7 +118,7 @@ class App extends Component {
                 }
             )
         }, () => {
-            let URL = '/rooms/' + this.props.rpath.match.params.user + '/message';
+            let URL = '/room/' + this.props.rpath.match.params.user + '/message';
 
             this.props.firebase.set(URL, this.state.roomViewData.message);
             this.setState({ latestMsg: '' });

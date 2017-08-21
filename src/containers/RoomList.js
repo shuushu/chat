@@ -81,9 +81,8 @@ class RoomList extends Component {
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
                                     <h5>방이름 / {data[key].roomName}</h5>
-                                    <div>
-                                        <p>방장 / {data[key].master.displayName}</p>
-                                        <p>참여인원 / {getMember(data[key].joins)}</p>
+                                    <div className="joins">
+                                        참여인원 / {getMember(data[key].joins)}
                                     </div>
                                 </Link>
                                 <a className="btn-floating btn-large waves-effect waves-light blue" >
