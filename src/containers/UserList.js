@@ -49,13 +49,22 @@ class UserList extends Component {
     createRoom = () => {
         let handleChanged = this.state.handleChanged;
         let user = this.props.member.users;
+        let joins = {};
 
         handleChanged.map((data,index)=>{
             if(data) {
-                console.log(user[index])
+                joins[user[index].key] = user[index];
             }
         });
-        // 룸생성 PK: ROOM ID, Join Members Array
+
+        // 룸정보 저장
+        let roomID = this.props.firebase.push('/room', {
+            roomName: '방이름을 설정하자!',
+            master: this.props.profile,
+            joins: joins
+        }).key;
+
+        window.location.href= '/roomView/' + roomID;
     };
 
 
