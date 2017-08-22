@@ -7,12 +7,14 @@ import update from 'react-addons-update'
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/userList.css';
+import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect([
     'users'
 ])
 @connect(
     ({ firebase }) => ({
+        auth: pathToJS(firebase, 'auth'),
         profile: pathToJS(firebase, 'profile'),
         member: pathToJS(firebase, 'ordered'),
     })
@@ -49,18 +51,21 @@ class UserList extends Component {
     createRoom = () => {
         let handleChanged = this.state.handleChanged;
         let user = this.props.member.users;
-        let joins = {};
+        let joins = [];
 
         handleChanged.map((data,index)=>{
+            // 체크된 유저만 joinArr 담는다
             if(data) {
-                joins[user[index].key] = user[index];
+                joins.push(user[index].key);
             }
         });
+        // 방장도 joins로 넣는다.
+        joins.push(this.props.auth.uid);
 
         // 룸정보 저장
         let roomID = this.props.firebase.push('/room', {
-            roomName: '방이름을 설정하자!',
-            master: this.props.profile,
+            roomName: `FK쉽게 연결시키기 ${convertDate('yymmddhhmmss')}`,
+            master: this.props.auth.uid,
             joins: joins
         }).key;
 

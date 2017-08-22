@@ -8,12 +8,13 @@ import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
 @firebaseConnect([
-    'room'
+    'room','users'
 ])
 @connect(
     ({ firebase }) => ({
-        profile: pathToJS(firebase, 'profile'),
-        room: dataToJS(firebase, 'room')
+        auth: pathToJS(firebase, 'auth'),
+        room: dataToJS(firebase, 'room'),
+        member: dataToJS(firebase, 'users')
     })
 )
 
@@ -49,6 +50,10 @@ class RoomList extends Component {
         }
     };
 
+    shouldComponentUpdate(nextProps) {
+        return (JSON.stringify(nextProps) != JSON.stringify(this.props));
+    }
+
     render() {
         if(this.state.isLogin) {
             return (
@@ -62,27 +67,33 @@ class RoomList extends Component {
         }
 
         let mapToList = (data) => {
-            if(this.props.profile !== undefined) {
-                let mail = this.props.profile.email;
+           let UID = this.props.auth.uid;
 
-                return Object.keys(data).map((key, index) => {
-                    console.log();
 
-                    if(mail === data[key].master.email) {
+           return Object.keys(data).map((key, index) => {
+               let { joins, lastMsg } = data[key];
+
+                return joins.map((joinsKey) => {
+                    if(UID === joinsKey) {
                         let getMember = (user) => {
-                            return Object.keys(user).map((key, index) => {
-                                return <span key={`user_${key}`}>{user[key].displayName}</span>
+                            return user.map((key, i) => {
+                                let { displayName } = this.props.member[key];
+                                return (
+                                    <span key={key}>{displayName}</span>
+                                )
                             });
                         };
-
+                        // 참여인원 / {getMember(data[key].joins)}
                         return (
                             <li key={key} className="collection-item avatar">
                                 <img src={data[key].master.avatarUrl} className="circle" alt={data[key].master.displayName} />
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
-                                    <h5>방이름 / {data[key].roomName}</h5>
+                                    <h5>{lastMsg}</h5>
                                     <div className="joins">
-                                        참여인원 / {getMember(data[key].joins)}
+                                        {this.props.member !== undefined &&
+                                            getMember(data[key].joins)
+                                        }
                                     </div>
                                 </Link>
                                 <a className="btn-floating btn-large waves-effect waves-light blue" >
@@ -92,7 +103,8 @@ class RoomList extends Component {
                         );
                     }
                 });
-            }
+
+           });
         };
 
         return (

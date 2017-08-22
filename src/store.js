@@ -10,7 +10,7 @@ const fbConfig = {
 	authDomain: "shushu-cb26c.firebaseapp.com",
 	databaseURL: "https://shushu-cb26c.firebaseio.com",
 	storageBucket: "shushu-cb26c.appspot.com"
-}
+};
 
 firebase.initializeApp(fbConfig);
 
