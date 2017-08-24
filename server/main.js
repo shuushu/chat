@@ -14,9 +14,9 @@ io.sockets.on('connection', function(socket){
     // 대화방 참석
     socket.on('joinroom',function(data){
         socket.join(data.roomID);
-
-        // 접속자 닉네임
-        socket.email = data.user.email;
+console.log('ROOM ID / ', data.roomID)
+       // 접속자 닉네임
+       // socket.email = data.user.email;
 
     });
 

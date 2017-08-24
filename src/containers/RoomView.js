@@ -17,7 +17,7 @@ import {convertDate} from '../commonJS/Util';
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            roomView: dataToJS(firebase, 'room')
+            room: dataToJS(firebase, 'room')
         })
     }
 )
@@ -32,14 +32,42 @@ class App extends Component {
             msg: [2122]
         }
     };
+    componentDidMount() {
+        let timer;
 
-    componentWillReceiveProps ({ auth, roomView }) {
+
+
+        let repeat = () => {
+            if(timer){
+                clearTimeout(timer);
+            }
+            // firebase에 연결될때까지 요청
+            if(this.props.room !== undefined) {
+                // 요청되면 타이머 종료
+                clearTimeout(timer);
+
+                const PATH = this.props.rpath.match.params.user;
+
+                this.props.socket.emit('joinroom',{
+                    roomID: this.props.room[PATH].message
+                });
+            } else {
+                timer = setTimeout(repeat, 1000);
+            }
+        };
+
+        repeat();
+    }
+
+
+
+    componentWillReceiveProps ({ auth, room }) {
         if (auth === null) {
             this.setState({
                 redirect: true
             })
         } else {
-            // 한번만 실행됨
+           /* // 한번만 실행됨
             if(this.props.roomView !== undefined) {
                 let path = this.props.rpath.match.params.user;
                 let joinArr = this.props.roomView[path].join;
@@ -73,7 +101,7 @@ class App extends Component {
                         user: auth
                      });
                 }
-            }
+            }*/
         }
     }
 
@@ -178,7 +206,7 @@ class App extends Component {
                 });
             }
         };
-
+        // {mapToList(this.state.roomViewData)}
         return (
               <div className="App">
                   <div>
@@ -187,7 +215,7 @@ class App extends Component {
                   </div>
                   <hr/>
                   <div id="messages">
-                      {mapToList(this.state.roomViewData)}
+
                   </div>
 
                   <div className="msgSendForm">

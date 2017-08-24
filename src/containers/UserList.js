@@ -64,10 +64,11 @@ class UserList extends Component {
 
         // 룸정보 저장
         let roomID = this.props.firebase.push('/room', {
-            roomName: `FK쉽게 연결시키기 ${convertDate('yymmddhhmmss')}`,
+            message: this.props.socket.id,
             master: this.props.auth.uid,
             joins: joins
         }).key;
+
 
         window.location.href= '/roomView/' + roomID;
     };

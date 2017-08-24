@@ -12,7 +12,7 @@ class App extends Component {
                 <Switch>
                     <Route exact path="/" component={RoomList} />
                     <Route path="/Login" component={Login} />
-                    <Route path="/UserList" component={UserList} />
+                    <Route path="/UserList" render={(path) => ( <UserList rpath={path} socket={socket} /> )} />
                     <Route path="/RoomList" component={RoomList} />
                     <Route path="/roomView/:user" render={(path) => ( <RoomView rpath={path} socket={socket} /> )}  />
                 </Switch>
