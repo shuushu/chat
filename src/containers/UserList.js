@@ -76,9 +76,14 @@ class UserList extends Component {
 
     render() {
         let mapToUserList = (data) => {
-            if(data !== undefined){
-                return data.users.map((user, index) => {
+            if(data){
+                // props가 갱신이 안될때 리턴
+                if(!data.users) return;
 
+                return data.users.map((user, index) => {
+                    // 프로필이 갱신이 안될때 리턴
+                    if(!this.props.profile) return;
+                    //  멤버노드를 검색한다. 자신일 경우에는 렌더 제외한다.
                     if(user.email === this.props.profile.email) {
                         return true;
                     }

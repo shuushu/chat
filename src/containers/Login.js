@@ -5,13 +5,14 @@ import { convertDate } from '../commonJS/Util';
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
-import { firebaseConnect, pathToJS } from 'react-redux-firebase'
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase'
 
 
-@firebaseConnect()
+@firebaseConnect([ 'room' ])
 @connect(
   ({ firebase }) => ({
-      auth : pathToJS(firebase, 'auth')
+      auth : pathToJS(firebase, 'auth'),
+      room: dataToJS(firebase, 'room')
   })
 )
 
@@ -19,15 +20,33 @@ class Login extends Component {
     state = {
         id: '',
         pw: '',
-        regMode: false,
-        redirect: false,
-        isJoins: true,
+        name: '',
+        regMode: false, //  로그인/회원가입 flag
+        isUserList: false, // 유저리스트로 리다이렉션 flag
+        isRoomList: false, // 룸리스트로 리다이렉션 flag
         uid: ''
     };
+/*
+    shouldComponentUpdate(nextProps){
+        return (JSON.stringify(nextProps) != JSON.stringify(this.props));
+    }
+*/
 
-    componentWillReceiveProps ({ auth }) {
+    componentWillReceiveProps ({ auth, room }) {
+        // 로그인 되었을때
         if (auth) {
-
+            if(room) {
+                for (let i in room) {
+                    // 로그인 한 아이디에 지정된 채팅룸이 있는지 검색한다
+                    room[i].joins.map((data) => {
+                        if (data === auth.uid) {
+                            this.setState({isRoomList: true});
+                        } else {
+                            this.setState({isUserList: true});
+                        }
+                    });
+                }
+            }
             /*this.setState({
                 redirect: true,
                 uid: auth.uid
@@ -61,6 +80,8 @@ class Login extends Component {
     // 회원가입
     signUp = (event) => {
         event.preventDefault();
+        // profile Object 형식이 google, facebook과 동일하게 하기 위해 다음과 같이 설계
+        let thumb = `http://lorempixel.com/120/120/?${convertDate('yymmddhhmmss')}`
 
         this.props.firebase.createUser(
             {
@@ -69,13 +90,13 @@ class Login extends Component {
                 signIn: true
             },
             {
-                avatarUrl: "http://lorempixel.com/120/120/?1",
-                displayName: "슈슈",
+                avatarUrl: thumb,
+                displayName: this.state.name,
                 email: this.state.id,
                 providerData: [{
-                    displayName: "슈슈",
+                    displayName: this.state.name,
                     email: this.state.id,
-                    photoURL: "http://lorempixel.com/120/120/?1",
+                    photoURL: thumb,
                     providerId: "email",
                     uid: convertDate('yymmddhhmmss')
                 }]
@@ -93,11 +114,18 @@ class Login extends Component {
 
 
     render() {
-        if(this.state.redirect) {
+        if(this.state.isRoomList) {
             return (
                 <Redirect to={`/roomList/${this.state.uid}`} />
             )
         }
+
+        if(this.state.isUserList) {
+            return (
+                <Redirect to='/userList' />
+            )
+        }
+
         const inputBox = (
             <div>
                 <div className="input-field col s12 username">
@@ -151,6 +179,13 @@ class Login extends Component {
                 <div className="card-content">
                     <div className="row">
                         { inputBox }
+                        <div className="input-field col s12">
+                            <label>name</label>
+                            <input name="name" type="text"
+                                   value={this.state.name}
+                                   onChange={this.handleChange}
+                            />
+                        </div>
                         <div>
                             <button className="btn waves-effect waves-light" type="submit" name="action" onClick={this.signUp} >CREATE
                                 <i className="material-icons right">send</i>
@@ -163,7 +198,6 @@ class Login extends Component {
         );
 
         return (
-
             <div className="container auth">
                 <a className="logo">MEMOPAD</a>
                 <div className="card">

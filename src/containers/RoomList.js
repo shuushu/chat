@@ -76,7 +76,7 @@ class RoomList extends Component {
                 return joins.map((joinsKey) => {
                     if(UID === joinsKey) {
                         let getMember = (user) => {
-                            return user.map((key, i) => {
+                            return user.map((key) => {
                                 let { displayName } = this.props.member[key];
                                 return (
                                     <span key={key}>{displayName}</span>
@@ -86,7 +86,7 @@ class RoomList extends Component {
                         // 참여인원 / {getMember(data[key].joins)}
                         return (
                             <li key={key} className="collection-item avatar">
-                                <img src={data[key].master.avatarUrl} className="circle" alt={data[key].master.displayName} />
+                                <img src={`http://lorempixel.com/200/200/${index}`} className="circle" alt={data[key].master.displayName} />
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
                                     <h5>{lastMsg}</h5>
