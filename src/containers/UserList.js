@@ -23,8 +23,17 @@ import {convertDate} from '../commonJS/Util';
 class UserList extends Component {
     state = {
         handleChanged: [],
-        isCreate: false
+        isCreate: false,
+        isLogin: false
     };
+
+    componentWillReceiveProps ({ auth }) {
+        if (auth === null) {
+            this.setState({
+                isLogin: true
+            })
+        }
+    }
 
     handleChange = (e) => {
         let idx = e.target.dataset.idx;
@@ -75,6 +84,12 @@ class UserList extends Component {
 
 
     render() {
+        if(this.state.isLogin) {
+            return (
+                <Redirect to="/Login" />
+            )
+        }
+
         let mapToUserList = (data) => {
             if(data){
                 // props가 갱신이 안될때 리턴

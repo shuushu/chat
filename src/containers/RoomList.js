@@ -8,13 +8,14 @@ import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
 @firebaseConnect([
-    'room','users'
+    'room','users', 'message'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
         room: dataToJS(firebase, 'room'),
-        member: dataToJS(firebase, 'users')
+        member: dataToJS(firebase, 'users'),
+        message: dataToJS(firebase, 'message')
     })
 )
 
@@ -25,8 +26,17 @@ class RoomList extends Component {
             created: false,
             url: null
         },
-        latestMsg: ''
+        latestMsg: '',
     };
+
+    componentDidMount() {
+        this.props.firebase.ref('/message/H5V4crngi0f_g6HAAAAD').on('value', (snapshot) => {
+            this.setState({
+                message: snapshot.val()
+            })
+        });
+
+    }
 
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
@@ -42,8 +52,8 @@ class RoomList extends Component {
 
     // 방 삭제
     handleDelete = (key) => {
-        if(this.props.auth.email === this.props.roomList[key].master){
-            this.props.firebase.remove('/rooms/' + key);
+        if(this.props.auth.uid === this.props.room[key].master){
+            this.props.firebase.remove('/room/' + key);
         } else {
             alert('권한이 없습니다.');
             return false;
@@ -69,9 +79,8 @@ class RoomList extends Component {
         let mapToList = (data) => {
            let UID = this.props.auth.uid;
 
-
            return Object.keys(data).map((key, index) => {
-               let { joins, lastMsg } = data[key];
+               let { joins } = data[key];
 
                 return joins.map((joinsKey) => {
                     if(UID === joinsKey) {
@@ -83,14 +92,34 @@ class RoomList extends Component {
                                 )
                             });
                         };
+
+                        let getMessage = (data) => {
+                            console.log(this.props.message[data]);
+                        }
+
+
+
+                        /*let latestMsg = (msg) => {
+                            this.props.firebase.ref('/message/' + msg).limitToLast(1).on('value', (snapshot) => {
+                                let data = snapshot.val();
+                                //console.log(data);
+                                this.setState({
+                                    latestMsg: 222
+                                })
+                            });
+                        };
+
+                        latestMsg(data[key].message)*/
+
                         // 참여인원 / {getMember(data[key].joins)}
                         return (
                             <li key={key} className="collection-item avatar">
                                 <img src={`http://lorempixel.com/200/200/${index}`} className="circle" alt={data[key].master.displayName} />
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
-                                    <h5>{lastMsg}</h5>
+                                    <p><strong>{this.props.message && getMessage(data[key].message)}</strong></p>
                                     <div className="joins">
+                                        참여자 :
                                         {this.props.member !== undefined &&
                                             getMember(data[key].joins)
                                         }
