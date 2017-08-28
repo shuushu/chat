@@ -53,7 +53,10 @@ class RoomList extends Component {
     // 방 삭제
     handleDelete = (key) => {
         if(this.props.auth.uid === this.props.room[key].master){
-            this.props.firebase.remove('/room/' + key);
+            let msgID = this.props.room[key].message;
+            this.props.firebase.remove('/room/' + key).then(()=>{
+                this.props.firebase.remove('/message/' + msgID)
+            });
         } else {
             alert('권한이 없습니다.');
             return false;
@@ -94,7 +97,10 @@ class RoomList extends Component {
                         };
 
                         let getMessage = (data) => {
-                            console.log(this.props.message[data]);
+                            let msg = this.props.message[data];
+                            return(
+                                <strong>{msg[msg.length-1].context}</strong>
+                            )
                         }
 
 
@@ -117,7 +123,7 @@ class RoomList extends Component {
                                 <img src={`http://lorempixel.com/200/200/${index}`} className="circle" alt={data[key].master.displayName} />
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
-                                    <p><strong>{this.props.message && getMessage(data[key].message)}</strong></p>
+                                    <p>{this.props.message && getMessage(data[key].message)}</p>
                                     <div className="joins">
                                         참여자 :
                                         {this.props.member !== undefined &&
