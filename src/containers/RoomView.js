@@ -9,7 +9,8 @@ import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
     return [
-        { path: 'room/' + props.rpath.match.params.user }
+        { path: 'room/' + props.rpath.match.params.user },
+        { path: 'message/' + props.rpath.match.params.user }
     ]
 })
 
@@ -17,7 +18,8 @@ import {convertDate} from '../commonJS/Util';
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: dataToJS(firebase, 'room')
+            room: dataToJS(firebase, 'room'),
+            message: dataToJS(firebase, 'message'),
         })
     }
 )
@@ -34,8 +36,6 @@ class App extends Component {
     };
     componentDidMount() {
         let timer;
-
-
 
         let repeat = () => {
             if(timer){
@@ -119,38 +119,16 @@ class App extends Component {
             alert('메세지를 입력하세요');
             return false;
         }
-        // 방에 혼자 있을경우
-        if(this.state.roomViewData.join.length < 2) {
-            alert('대화 상대가 없습니다.');
-            this.setState({ latestMsg: '' });
-            return false;
-        }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
         const message = Object.assign({
             user: this.props.auth.email,
             sendMsg: this.state.latestMsg,
             time: currentTime,
-            seq: convertDate('yymmddhhmmss'),
-            listener: this.state.roomViewData.join
+            seq: convertDate('yymmddhhmmss')
         });
 
         this.props.socket.emit('message', message);
-
-        this.setState({
-            roomViewData: update(
-                this.state.roomViewData, {
-                    message: {
-                        $push: [message]
-                    }
-                }
-            )
-        }, () => {
-            let URL = '/room/' + this.props.rpath.match.params.user + '/message';
-
-            this.props.firebase.set(URL, this.state.roomViewData.message);
-            this.setState({ latestMsg: '' });
-        });
     };
 
     render() {
@@ -206,6 +184,10 @@ class App extends Component {
                 });
             }
         };
+
+        let mapToList2 = (message) => {
+console.log(message);
+        }
         // {mapToList(this.state.roomViewData)}
         return (
               <div className="App">
@@ -215,7 +197,7 @@ class App extends Component {
                   </div>
                   <hr/>
                   <div id="messages">
-
+                      { this.props.message && mapToList2(this.props.message)}
                   </div>
 
                   <div className="msgSendForm">
