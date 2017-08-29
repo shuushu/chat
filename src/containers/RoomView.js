@@ -30,10 +30,9 @@ class App extends Component {
         ieEmpty: false,
         roomViewData: null,
         latestMsg: '',
-        test: {
-            msg: [2122]
-        }
+        message: []
     };
+
     componentDidMount() {
         let timer;
 
@@ -121,14 +120,49 @@ class App extends Component {
         }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
-        const message = Object.assign({
+        const message = {
             user: this.props.auth.email,
             sendMsg: this.state.latestMsg,
             time: currentTime,
             seq: convertDate('yymmddhhmmss')
+        };
+
+        this.setState({
+            message: update(
+                this.state.message, {
+                        $push: [message]
+                }
+            )
+        }, () => {
+            this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(this.state.message);
         });
 
-        this.props.socket.emit('message', message);
+
+        //this.props.socket.emit('message', message);
+
+        //let msg = this.props.message;
+
+
+        //this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).push(message);
+
+
+        /* 이전코드
+        this.setState({
+            roomViewData: update(
+                this.state.roomViewData, {
+                    message: {
+                        $push: [message]
+                    }
+                }
+            )
+        }, () => {
+            let URL = '/room/' + this.props.rpath.match.params.user + '/message';
+
+            this.props.firebase.set(URL, this.state.roomViewData.message);
+            this.setState({ latestMsg: '' });
+        });
+
+        */
     };
 
     render() {
@@ -186,7 +220,20 @@ class App extends Component {
         };
 
         let mapToList2 = (message) => {
-console.log(message);
+            if(message) {
+                let msgData = message[this.props.rpath.match.params.user];
+                return msgData.map((data,i) => {
+                    return (
+                        <div key={`itemMSG${i}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
+                            <em>{data.user}</em>
+                            / {data.sendMsg}
+                            <p>
+                                <strong>{data.time}</strong>
+                            </p>
+                        </div>
+                    )
+                })
+            }
         }
         // {mapToList(this.state.roomViewData)}
         return (
