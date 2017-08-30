@@ -6,3 +6,28 @@
 .collection .joins span{
     margin-right: 5px;
 }
+.thumb > img{
+    position: absolute;
+    display: block;
+}
+.cnt2 > img{ width: 42px; height: 42px; }
+.cnt2 .i0{ top: 0;left: -21px; }
+.cnt2 .i1{ top: 0;right: -21px; }
+
+.cnt3 .i0{
+    width: 42px;
+    height: 42px;}
+.cnt3 .i1{
+    bottom: 0;
+    left: 0;
+    width: 21px;}
+.cnt3 .i2{
+    bottom: 0;
+    right: 0;
+    width: 21px;}
+
+.cnt4 > img{ width: 21px; height: 21px; }
+.cnt4 .i0{ top: 0;left: 0;z-index: 3; }
+.cnt4 .i1{ top: 0;right: 0;z-index: 3; }
+.cnt4 .i2{ bottom: 0;left: 0;z-index: 3; }
+.cnt4 .i3{ bottom: 0;right: 0;z-index: 3; }

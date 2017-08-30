@@ -101,7 +101,16 @@ class RoomList extends Component {
                             return(
                                 <strong>{msg[msg.length-1].context}</strong>
                             )
-                        }
+                        };
+
+                        let getImage = (user) => {
+                            return user.map((key, i) => {
+                                let { avatarUrl, displayName } = this.props.member[key];
+                                return (
+                                    <img key={`img${key}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
+                                )
+                            });
+                        };
 
 
 
@@ -116,19 +125,16 @@ class RoomList extends Component {
                         };
 
                         latestMsg(data[key].message)*/
-
                         // 참여인원 / {getMember(data[key].joins)}
                         return (
                             <li key={key} className="collection-item avatar">
-                                <img src={`http://lorempixel.com/200/200/${index}`} className="circle" alt={data[key].master.displayName} />
+                                <span className={`thumb circle cnt${data[key].joins.length > 4 ? '4' : data[key].joins.length }`}>{ this.props.member && getImage(data[key].joins) }</span>
                                 <Link to={`/roomView/${key}`}>
                                     <span>idx : {index}</span>
                                     <p>{this.props.message && getMessage(data[key].message)}</p>
                                     <div className="joins">
                                         참여자 :
-                                        {this.props.member !== undefined &&
-                                            getMember(data[key].joins)
-                                        }
+                                        { this.props.member && getMember(data[key].joins) }
                                     </div>
                                 </Link>
                                 <a className="btn-floating btn-large waves-effect waves-light blue" >
@@ -155,7 +161,7 @@ class RoomList extends Component {
                 </nav>
 
                 <ul className="collection">
-                    {this.props.room !== undefined && mapToList(this.props.room)}
+                    {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
                 </ul>
             </div>
         );

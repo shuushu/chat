@@ -33,74 +33,17 @@ class App extends Component {
         message: []
     };
 
-    componentDidMount() {
-        let timer;
-
-        let repeat = () => {
-            if(timer){
-                clearTimeout(timer);
-            }
-            // firebase에 연결될때까지 요청
-            if(this.props.room !== undefined) {
-                // 요청되면 타이머 종료
-                clearTimeout(timer);
-
-                const PATH = this.props.rpath.match.params.user;
-
-                this.props.socket.emit('joinroom',{
-                    roomID: this.props.room[PATH].message
-                });
-            } else {
-                timer = setTimeout(repeat, 1000);
-            }
-        };
-
-        repeat();
-    }
-
-
-
     componentWillReceiveProps ({ auth, room }) {
+        if(room) {
+            if(!room[this.props.rpath.match.params.user]) {
+                window.location.href = '/roomList';
+            }
+        }
+
         if (auth === null) {
             this.setState({
                 redirect: true
             })
-        } else {
-           /* // 한번만 실행됨
-            if(this.props.roomView !== undefined) {
-                let path = this.props.rpath.match.params.user;
-                let joinArr = this.props.roomView[path].join;
-                let flag = true;
-
-                joinArr.map((joinEmail) => {
-                    if( joinEmail === this.props.auth.email) {
-                        flag = false;
-                    }
-                });
-                // 첫방문시 join에 방문자 추가
-                if(flag) {
-                   this.props.firebase.set('room/' + this.props.rpath.match.params.user + '/join/' + joinArr.length, this.props.auth.email);
-                }
-
-                this.setState({
-                    roomViewData: roomView[this.props.rpath.match.params.user]
-                });
-            }
-
-
-
-            if(roomView !== undefined) {
-                if(isEmpty(roomView[this.props.rpath.match.params.user])) {
-                    this.setState({
-                        ieEmpty: true
-                    })
-                } else {
-                    this.props.socket.emit('joinroom',{
-                        roomID: this.props.rpath.match.params.user,
-                        user: auth
-                     });
-                }
-            }*/
         }
     }
 
@@ -127,42 +70,12 @@ class App extends Component {
             seq: convertDate('yymmddhhmmss')
         };
 
-        this.setState({
-            message: update(
-                this.state.message, {
-                        $push: [message]
-                }
-            )
-        }, () => {
-            this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(this.state.message);
-        });
+        let msg = this.props.message[this.props.rpath.match.params.user];
+            msg = msg || [];
+            msg.push(message);
 
-
-        //this.props.socket.emit('message', message);
-
-        //let msg = this.props.message;
-
-
-        //this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).push(message);
-
-
-        /* 이전코드
-        this.setState({
-            roomViewData: update(
-                this.state.roomViewData, {
-                    message: {
-                        $push: [message]
-                    }
-                }
-            )
-        }, () => {
-            let URL = '/room/' + this.props.rpath.match.params.user + '/message';
-
-            this.props.firebase.set(URL, this.state.roomViewData.message);
-            this.setState({ latestMsg: '' });
-        });
-
-        */
+        this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(msg);
+        this.setState({ latestMsg: '' });
     };
 
     render() {
@@ -190,38 +103,11 @@ class App extends Component {
             });
         };
 
-        let mapToList = (listData) => {
-            if(listData !== null) {
-                let msgData = listData.message;
-
-                return msgData.map((data, idx) => {
-                    // 메세지만 렌더링
-                    if(typeof data !== 'object') {
-                        return false;
-                    }
-                    // 채팅 입력시 현재 참여인원에게만 메세지를 보여준다
-                    for(let i in data.listener) {
-                        if(data.listener[i] === this.props.auth.email) {
-                            return (
-                                <div key={`key${idx}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
-                                    {listData.master === data.user && (<span>★</span>)}
-                                    <em>{data.user}</em>
-                                    / {data.sendMsg}
-                                    <p>
-                                        <strong>{data.time}</strong>
-                                    </p>
-
-                                </div>
-                            );
-                        }
-                    }
-                });
-            }
-        };
-
         let mapToList2 = (message) => {
-            if(message) {
-                let msgData = message[this.props.rpath.match.params.user];
+            let key = this.props.rpath.match.params.user;
+
+            if(message[key]) {
+                let msgData = message[key];
                 return msgData.map((data,i) => {
                     return (
                         <div key={`itemMSG${i}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
@@ -239,6 +125,7 @@ class App extends Component {
         return (
               <div className="App">
                   <div>
+                      <Link to="/roomList">뒤로</Link>
                       참여인원:
                       { this.state.roomViewData !== null && getMember() }
                   </div>

@@ -71,17 +71,19 @@ class UserList extends Component {
         // 방장도 joins로 넣는다.
         joins.push(this.props.auth.uid);
 
-        // 룸정보 저장 PK = SocketID
         let updates = {};
-        updates['/room/' + this.props.socket.id] = {
-            message: this.props.socket.id,
+        // 룸정보 저장 PK = SocketID
+        const KEY = convertDate('yymmddhhmmss');
+
+        updates['/room/' + KEY] = {
+            message: KEY,
             master: this.props.auth.uid,
             joins: joins
         };
 
         this.props.firebase.ref().update(updates);
 
-        window.location.href= '/roomView/' + this.props.socket.id;
+        window.location.href= '/roomView/' + KEY;
     };
 
 
