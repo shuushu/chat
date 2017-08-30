@@ -72,7 +72,7 @@ class UserList extends Component {
         joins.push(this.props.auth.uid);
 
         let updates = {};
-        // 룸정보 저장 PK = SocketID
+        // 룸정보 저장 PK = 실시간타임
         const KEY = convertDate('yymmddhhmmss');
 
         updates['/room/' + KEY] = {

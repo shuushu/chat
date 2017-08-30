@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import { RoomList, RoomView, Login, UserList } from './index';
-import SocketIOClient from 'socket.io-client';
-
-let socket = SocketIOClient('/');
 
 class App extends Component {
     render() {
@@ -14,7 +11,7 @@ class App extends Component {
                     <Route path="/Login" component={Login} />
                     <Route path="/UserList" component={UserList} />
                     <Route path="/RoomList" component={RoomList} />
-                    <Route path="/roomView/:user" render={(path) => ( <RoomView rpath={path} socket={socket} /> )}  />
+                    <Route path="/roomView/:user" render={(path) => ( <RoomView rpath={path} /> )}  />
                 </Switch>
             </div>
         )
