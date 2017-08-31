@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
-import { firebaseConnect, pathToJS, dataToJS, isEmpty } from 'react-redux-firebase';
-import update from 'react-addons-update';
-
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+import { CSSTransitionGroup } from 'react-transition-group'; // ES6
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
@@ -30,8 +29,15 @@ class App extends Component {
         ieEmpty: false,
         roomViewData: null,
         latestMsg: '',
-        message: []
+        message: [],
+        scroll: 0
     };
+
+    componentDidMount() {
+        setTimeout(()=>{
+            window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
+    }
 
     componentWillReceiveProps ({ auth, room }) {
         if(room) {
@@ -46,6 +52,32 @@ class App extends Component {
             })
         }
     }
+
+
+
+    onScroll() {
+        const scrollTop = document.body.scrollTop;
+        const clientHeight = document.body.clientHeight;
+        const screenHeight = window.screen.height;
+
+        if ( scrollTop >= clientHeight - screenHeight ){
+            console.log('11')
+        } else {
+            this.setState({ hasNewMessage: true });
+        }
+    }
+
+    scrollToBottom() {
+        setTimeout(()=>{
+            window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
+
+        this.setState({
+            isScrollAtBottom: true,
+            hasNewMessage: false
+        });
+    }
+
 
     // input TEXT
     handleChange = (e) => {
@@ -74,8 +106,13 @@ class App extends Component {
             msg = msg || [];
             msg.push(message);
 
-        this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(msg);
-        this.setState({ latestMsg: '' });
+        let that = this;
+
+        this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(msg, function(){
+            that.onScroll();
+            //window.scrollTo(0, document.body.scrollHeight);
+            that.setState({ latestMsg: '' });
+        });
     };
 
     render() {
@@ -108,6 +145,7 @@ class App extends Component {
 
             if(message[key]) {
                 let msgData = message[key];
+
                 return msgData.map((data,i) => {
                     return (
                         <div key={`itemMSG${i}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
@@ -118,9 +156,10 @@ class App extends Component {
                             </p>
                         </div>
                     )
-                })
+                });
             }
-        }
+        };
+
         // {mapToList(this.state.roomViewData)}
         return (
               <div className="App">
@@ -133,6 +172,24 @@ class App extends Component {
                   <div id="messages">
                       { this.props.message && mapToList2(this.props.message)}
                   </div>
+                  <CSSTransitionGroup
+                      className="animated message__unread"
+                      transitionName={{
+                          enter: 'fadeIn',
+                          leave: 'fadeOutLeft'
+                      }}
+                      transitionEnterTimeout={5000}
+                      transitionLeaveTimeout={300}>
+                      {this.state.hasNewMessage &&
+
+                      <button className="animated waves-effect waves-light btn ">
+                          새 메시지가 있습니다.
+                          <i className="material-icons right">new_releases</i>
+                      </button>
+                      }
+
+                  </CSSTransitionGroup>
+
 
                   <div className="msgSendForm">
                       <form action="" onSubmit={this.handleSubmit}>

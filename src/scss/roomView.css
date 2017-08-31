@@ -1,19 +1,112 @@
+#messages{
+  margin-bottom: 70px;
+}
+
 .msgSendForm{
   position: fixed;
   left: 0;
+  padding-top: 50px;
   bottom: 0;
   width: 100%;
-}
 
+  background: -moz-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(255,255,255, 1) 42%, rgba(255,255,255,1) 100%); /* FF3.6-15 */
+  background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255, 1) 42%,rgba(255,255,255,1) 100%); /* Chrome10-25,Safari5.1-6 */
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255, 1) 42%,rgba(255,255,255,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+}
+.msgSendForm #m{
+  padding-top: 5px;
+  text-indent: 2%;
+  margin-bottom: 10px;}
 .msgSendForm .waves-effect{
   position: absolute;
-  right:0;
-  top: 0;
+  right: 2%;
+  top: 55px;
+  font-size: 12px;
+  padding:0 1rem;
+
 }
+.msgSendForm i.right{
+  margin-left: 5px;
+}
+
 #messages .list{
   text-align: left
 
 }
 #messages .mine{
   text-align: right;
+}
+
+
+.message__unread {
+  position: fixed;
+  width: 96%;
+  bottom: 60px;
+  z-index: 100;
+  border: 0;
+  left: 2%;
+}
+
+
+/*base code*/
+.animated {
+  -webkit-animation-duration: 5s;
+  animation-duration: 5s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+.animated.infinite {
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+}
+.animated.hinge {
+  -webkit-animation-duration: 2s;
+  animation-duration: 2s;
+}
+/*the animation definition*/
+@-webkit-keyframes fadeOutLeft {
+  0% {
+    opacity: 1
+  }
+  100% {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0)
+  }
+}
+@keyframes fadeOutLeft {
+  0% {
+    opacity: 1
+  }
+  100% {
+    opacity: 0;
+    -webkit-transform: translate3d(-100%, 0, 0);
+    -ms-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0)
+  }
+}
+.fadeOutLeft {
+  -webkit-animation-name: fadeOutLeft;
+  animation-name: fadeOutLeft
+}
+
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0
+  }
+  100% {
+    opacity: 1
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0
+  }
+  100% {
+    opacity: 1
+  }
+}
+.fadeIn {
+  -webkit-animation-name: fadeIn;
+  animation-name: fadeIn
 }

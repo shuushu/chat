@@ -1,7 +1,7 @@
 {
   "name": "any",
   "version": "0.1.0",
-  "proxy": "http://localhost:3500",
+  "proxy": "http://localhost:3000",
   "private": true,
   "dependencies": {
     "autoprefixer": "7.1.1",
@@ -48,6 +48,7 @@
     "react-redux": "^5.0.5",
     "react-redux-firebase": "^1.4.4",
     "react-router-dom": "^4.1.1",
+    "react-transition-group": "^1.2.0",
     "redux": "^3.7.1",
     "redux-actions": "^2.2.1",
     "redux-pender": "^1.0.24",

@@ -98,9 +98,12 @@ class RoomList extends Component {
 
                         let getMessage = (data) => {
                             let msg = this.props.message[data];
-                            return(
-                                <strong>{msg[msg.length-1].context}</strong>
-                            )
+
+                            if(msg) {
+                                return(
+                                    <strong>{msg[msg.length-1].sendMsg}</strong>
+                                )
+                            }
                         };
 
                         let getImage = (user) => {
