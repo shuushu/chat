@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import { Redirect, Link } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+import { firebaseConnect, pathToJS } from 'react-redux-firebase';
 import update from 'react-addons-update'
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
@@ -36,6 +36,7 @@ class UserList extends Component {
     }
 
     handleChange = (e) => {
+        let cnt = 0;
         let idx = e.target.dataset.idx;
         this.setState({
             handleChanged: update(
@@ -46,10 +47,9 @@ class UserList extends Component {
                 }
             )
         }, () => {
-            let cnt = 0;
-            this.state.handleChanged.map((i)=>{
-                if(i) { cnt++ }
-            });
+            for(let i=0;i<this.state.handleChanged.length;i++) {
+                if(this.state.handleChanged[i]) { cnt++ }
+            }
 
             this.setState({
                 isCreate: (cnt > 0)
@@ -62,12 +62,13 @@ class UserList extends Component {
         let user = this.props.member.users;
         let joins = [];
 
-        handleChanged.map((data,index)=>{
+        for(let i=0;i<handleChanged.length;i++) {
             // 체크된 유저만 joinArr 담는다
-            if(data) {
-                joins.push(user[index].key);
+            if(handleChanged[i]) {
+                joins.push(user[i].key);
             }
-        });
+        }
+
         // 방장도 joins로 넣는다.
         joins.push(this.props.auth.uid);
 

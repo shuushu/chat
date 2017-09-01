@@ -88,6 +88,7 @@ class App extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
+        const KEY = this.props.rpath.match.params.user;
 
         if(this.state.latestMsg === '') {
             alert('메세지를 입력하세요');
@@ -97,18 +98,19 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
         const message = {
             user: this.props.auth.email,
+            state: this.props.room[KEY].joins.length,
             sendMsg: this.state.latestMsg,
             time: currentTime,
             seq: convertDate('yymmddhhmmss')
         };
 
-        let msg = this.props.message[this.props.rpath.match.params.user];
+        let msg = this.props.message[KEY];
             msg = msg || [];
             msg.push(message);
 
         let that = this;
 
-        this.props.firebase.ref(`/message/${this.props.rpath.match.params.user}`).update(msg, function(){
+        this.props.firebase.ref(`/message/${KEY}`).update(msg, function(){
             that.onScroll();
             //window.scrollTo(0, document.body.scrollHeight);
             that.setState({ latestMsg: '' });
@@ -178,16 +180,14 @@ class App extends Component {
                           enter: 'fadeIn',
                           leave: 'fadeOutLeft'
                       }}
-                      transitionEnterTimeout={5000}
-                      transitionLeaveTimeout={300}>
+                      transitionEnterTimeout={300}
+                      transitionLeaveTimeout={1000}>
                       {this.state.hasNewMessage &&
-
-                      <button className="animated waves-effect waves-light btn ">
-                          새 메시지가 있습니다.
-                          <i className="material-icons right">new_releases</i>
-                      </button>
+                          <button className="animated waves-effect waves-light btn ">
+                              새 메시지가 있습니다.
+                              <i className="material-icons right">new_releases</i>
+                          </button>
                       }
-
                   </CSSTransitionGroup>
 
 
