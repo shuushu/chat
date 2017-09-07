@@ -1,3 +1,8 @@
+.collection{
+    box-sizing: border-box;
+    border:0;
+}
+
 .collection .btn-floating{
     position: absolute;
     right: 10px;

@@ -1,5 +1,6 @@
 #messages{
   margin-bottom: 70px;
+  overflow: hidden;
 }
 
 .msgSendForm{
@@ -28,15 +29,52 @@
 .msgSendForm i.right{
   margin-left: 5px;
 }
-
+#messages .list,
+#messages .mine{
+  display: table;
+  clear: both;
+  position: relative;
+  margin: 10px 0;
+}
 #messages .list{
-  text-align: left
+  float: left;
 
 }
 #messages .mine{
-  text-align: right;
+  float: right;
 }
-
+#messages time{
+  font-size: 11px;}
+#messages .state{
+  border-radius: 13px;
+  display: inline-block;
+  background-color: darkred;
+  color: #fff;
+  font-size: 11px;
+  width: 13px;
+  text-align: center;
+  height: 13px;
+}
+#messages .imgs{
+  display: table-cell;
+  font-size: 0;
+  vertical-align: middle;
+}
+#messages .imgs img{
+  width: 40px;
+  height: 40px;
+  border-radius: 40px;
+}
+#messages .mine .state{
+  display: none;}
+#messages .message{
+  padding: 0;
+  margin: 0;
+}
+#messages .profile{
+  display: table-cell;
+  vertical-align: middle;
+}
 
 .message__unread {
   position: fixed;
@@ -50,8 +88,8 @@
 
 /*base code*/
 .animated {
-  -webkit-animation-duration: 5s;
-  animation-duration: 5s;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
   -webkit-animation-fill-mode: both;
   animation-fill-mode: both;
 }

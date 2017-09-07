@@ -3,7 +3,6 @@ import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
-import { CSSTransitionGroup } from 'react-transition-group'; // ES6
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect((props) => {
@@ -17,6 +16,7 @@ import {convertDate} from '../commonJS/Util';
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
+            profile: pathToJS(firebase, 'profile'),
             room: dataToJS(firebase, 'room'),
             message: dataToJS(firebase, 'message'),
         })
@@ -55,7 +55,7 @@ class App extends Component {
 
 
 
-    onScroll() {
+    onScroll(writer) {
         const scrollTop = document.body.scrollTop;
         const clientHeight = document.body.clientHeight;
         const screenHeight = window.screen.height;
@@ -63,7 +63,7 @@ class App extends Component {
         if ( scrollTop >= clientHeight - screenHeight ){
             console.log('11')
         } else {
-            this.setState({ hasNewMessage: true });
+
         }
     }
 
@@ -96,10 +96,13 @@ class App extends Component {
         }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
+
         const message = {
             user: this.props.auth.email,
-            state: this.props.room[KEY].joins.length,
+            nickName: this.props.profile.displayName,
+            state: this.props.room[KEY].joins.length-1,
             sendMsg: this.state.latestMsg,
+            avatarUrl: this.props.profile.avatarUrl,
             time: currentTime,
             seq: convertDate('yymmddhhmmss')
         };
@@ -111,8 +114,10 @@ class App extends Component {
         let that = this;
 
         this.props.firebase.ref(`/message/${KEY}`).update(msg, function(){
-            that.onScroll();
-            //window.scrollTo(0, document.body.scrollHeight);
+
+            //that.onScroll(that.props.auth.uid);
+
+            window.scrollTo(0, document.body.scrollHeight);
             that.setState({ latestMsg: '' });
         });
     };
@@ -151,15 +156,26 @@ class App extends Component {
                 return msgData.map((data,i) => {
                     return (
                         <div key={`itemMSG${i}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
-                            <em>{data.user}</em>
-                            / {data.sendMsg}
-                            <p>
-                                <strong>{data.time}</strong>
-                            </p>
+                            <div className="imgs">
+                                <img src={data.avatarUrl ? data.avatarUrl : 'http://placehold.it/40x40' } alt=""/>
+                            </div>
+                            <div className="profile">
+                                <div>
+                                    <em>{data.nickName}</em> /
+                                    <time dateTime={data.time}>{data.time}</time>
+                                    <span className="state">{data.state}</span>
+                                </div>
+                                <p className="message">{data.sendMsg}</p>
+                            </div>
                         </div>
                     )
                 });
             }
+        };
+
+        let test = () => {
+            let msgArr = this.props.message[this.props.rpath.match.params.user];
+            console.log(msgArr[msgArr.length-1])
         };
 
         // {mapToList(this.state.roomViewData)}
@@ -174,21 +190,14 @@ class App extends Component {
                   <div id="messages">
                       { this.props.message && mapToList2(this.props.message)}
                   </div>
-                  <CSSTransitionGroup
-                      className="animated message__unread"
-                      transitionName={{
-                          enter: 'fadeIn',
-                          leave: 'fadeOutLeft'
-                      }}
-                      transitionEnterTimeout={300}
-                      transitionLeaveTimeout={1000}>
-                      {this.state.hasNewMessage &&
-                          <button className="animated waves-effect waves-light btn ">
-                              새 메시지가 있습니다.
-                              <i className="material-icons right">new_releases</i>
-                          </button>
-                      }
-                  </CSSTransitionGroup>
+                  {this.props.message && test()}
+
+                  {this.state.hasNewMessage &&
+                      <button className="animated message__unread fadeIn waves-effect waves-light btn">
+                          새 메시지가 있습니다.
+                          <i className="material-icons right">new_releases</i>
+                      </button>
+                  }
 
 
                   <div className="msgSendForm">

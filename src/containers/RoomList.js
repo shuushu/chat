@@ -64,7 +64,7 @@ class RoomList extends Component {
     };
 
     shouldComponentUpdate(nextProps) {
-        return (JSON.stringify(nextProps) != JSON.stringify(this.props));
+        return (JSON.stringify(nextProps) !== JSON.stringify(this.props));
     }
 
     render() {
