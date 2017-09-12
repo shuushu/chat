@@ -53,9 +53,37 @@ class App extends Component {
         }
     }
 
+    shouldComponentUpdate(nextProps, nextState){
+        if(this.props.message !== undefined) {
+            let id = this.props.rpath.match.params.user;
+            let msg = this.props.message[id];
+            let msgLast = msg[msg.length-1];
+
+            if(nextState.latestMsg !== this.state.latestMsg) {
+                return true;
+            }
 
 
-    onScroll(writer) {
+            return true;
+
+                //console.log(nextProps.message.length, this.props.message.length);
+
+        /*    if(nextProps.message.length !== this.props.message.length) {
+                return true;
+            }
+            if(nextProps.message[id].length !== msg.length){
+                return true;
+            } else {
+                return false;
+            }*/
+        } else {
+            return false;
+        }
+    }
+
+
+
+    onScroll(lastMsg) {
         const scrollTop = document.body.scrollTop;
         const clientHeight = document.body.clientHeight;
         const screenHeight = window.screen.height;
@@ -63,7 +91,11 @@ class App extends Component {
         if ( scrollTop >= clientHeight - screenHeight ){
             console.log('11')
         } else {
+            /*if(lastMsg.uid === this.props.auth.uid) {
 
+            } else {
+
+            }*/
         }
     }
 
@@ -98,13 +130,12 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
 
         const message = {
-            user: this.props.auth.email,
+            uid: this.props.auth.uid,
             nickName: this.props.profile.displayName,
             state: this.props.room[KEY].joins.length-1,
             sendMsg: this.state.latestMsg,
             avatarUrl: this.props.profile.avatarUrl,
-            time: currentTime,
-            seq: convertDate('yymmddhhmmss')
+            time: currentTime
         };
 
         let msg = this.props.message[KEY];
@@ -114,8 +145,9 @@ class App extends Component {
         let that = this;
 
         this.props.firebase.ref(`/message/${KEY}`).update(msg, function(){
+            /*let msg = that.props.message[that.props.rpath.match.params.user];
 
-            //that.onScroll(that.props.auth.uid);
+            that.onScroll(msg[msg.length-1]);*/
 
             window.scrollTo(0, document.body.scrollHeight);
             that.setState({ latestMsg: '' });
@@ -155,7 +187,7 @@ class App extends Component {
 
                 return msgData.map((data,i) => {
                     return (
-                        <div key={`itemMSG${i}`} className={data.user === this.props.auth.email ? 'mine' : 'list'}>
+                        <div key={`itemMSG${i}`} className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
                             <div className="imgs">
                                 <img src={data.avatarUrl ? data.avatarUrl : 'http://placehold.it/40x40' } alt=""/>
                             </div>
@@ -190,7 +222,7 @@ class App extends Component {
                   <div id="messages">
                       { this.props.message && mapToList2(this.props.message)}
                   </div>
-                  {this.props.message && test()}
+                  {/*{this.props.message && test()}*/}
 
                   {this.state.hasNewMessage &&
                       <button className="animated message__unread fadeIn waves-effect waves-light btn">
