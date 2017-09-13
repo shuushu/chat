@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 import {convertDate} from '../commonJS/Util';
-import CSSTransitionGroup from 'react-transition-group/CSSTransitionGroup';
+import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 @firebaseConnect((props) => {
     return [
@@ -56,9 +56,10 @@ class App extends Component {
             if(this.props.message !== undefined) {
                 // 요청되면 타이머 종료
                 clearTimeout(timer);
-
+//console.log(this.props.message);
+//return false;
                 let that = this;
-                let msgSize = that.props.message[that.props.rpath.match.params.user].length-1;
+                let msgSize = (this.props.message[that.props.rpath.match.params.user]) ? that.props.message[that.props.rpath.match.params.user].length-1 : 0;
 
                 this.props.firebase.ref('/message/' + this.props.rpath.match.params.user).limitToLast(1).on("child_added", function(snapshot) {
                     // 컴포넌트 렌더링 이후 메세지 수신이 있으면 실행
@@ -260,17 +261,17 @@ class App extends Component {
                   </div>
                   {this.props.message && test(this.state.newMsg)}
 
-                  <CSSTransitionGroup
+                  <ReactCSSTransitionGroup
                       component="div"
                       className="animated"
                       transitionName={{
                           enter: 'fadeIn',
                           leave: 'fadeOutDown'
                       }}
-                      transitionAppearTimeout={3000}
+                      transitionEnterTimeout={3000}
                       transitionLeaveTimeout={1000}>
                       {this.state.hasNewMessage && newMsgRender()}
-                  </CSSTransitionGroup>
+                  </ReactCSSTransitionGroup >
 
                   <div className="msgSendForm">
                       <form action="" onSubmit={this.handleSubmit}>
