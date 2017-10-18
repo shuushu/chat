@@ -34,17 +34,14 @@ class App extends Component {
             roomViewData: null,
             latestMsg: '',
             hasNewMessage: false,
-            size: 10
+            size: 20,
+            componentDidMount: true
         };
         this.onScroll = this.onScroll.bind(this);
     }
 
 
     componentDidMount() {
-        setTimeout(()=>{
-            window.scrollTo(0, document.body.scrollHeight);
-        }, 100);
-
         window.addEventListener('scroll', this.onScroll, true);
 
         let timer;
@@ -65,6 +62,17 @@ class App extends Component {
                     // 컴포넌트 렌더링 이후 메세지 수신이 있으면 실행
                     if(msgSize !== Number(snapshot.key)) {
                         if(snapshot.val().uid !== that.props.auth.uid) {
+                            const scrollTop = window.scrollY;
+                            const clientHeight = document.body.clientHeight;
+                            const screenHeight = window.screen.height;
+                            // 읽음 표시상태 로직
+                            if(scrollTop >= clientHeight - screenHeight -200) {
+                                let ROOM_KEY = that.props.rpath.match.params.user;
+
+                                that.props.firebase.ref(`/message/${ROOM_KEY}/${snapshot.key}`).update({
+                                        state: snapshot.val().state - 1
+                                }, function(){});
+                            }
                             that.setState({ hasNewMessage: true })
                         }
                     }
@@ -97,11 +105,12 @@ class App extends Component {
     
 
     onScroll() {
-        const scrollTop = document.body.scrollTop;
+        const scrollTop = window.scrollY;
         const clientHeight = document.body.clientHeight;
         const screenHeight = window.screen.height;
 
         if ( scrollTop < 100) {
+            // 이전 데이터 보여줌
             this.handleLoad();
         }
 
@@ -145,6 +154,7 @@ class App extends Component {
 
         this.props.firebase.ref(`/message/${KEY}`).update(msg, function(){
             window.scrollTo(0, document.body.scrollHeight);
+
             that.setState({
                 latestMsg: '',
                 size: that.state.size + 1
@@ -164,6 +174,10 @@ class App extends Component {
     };
 
     render() {
+        const scrollTop = window.scrollY;
+        const clientHeight = document.body.clientHeight;
+        const screenHeight = window.screen.height;
+
         if(this.state.redirect) {
             return (
                 <Redirect to="/Login" />
@@ -190,12 +204,26 @@ class App extends Component {
 
         let mapToList2 = (message) => {
             let key = this.props.rpath.match.params.user;
+            let currentHeight = document.body.scrollHeight;
 
             if(message[key]) {
                 let msgData = message[key];
 
                 return msgData.map((data,i) => {
-                    if(i < msgData.length - this.state.size){ return true }
+
+                    if(i < msgData.length - this.state.size) {
+                        return false;
+                    }
+                    // 마지막메세지
+                    if(i >= msgData.length-1) {
+                        if(this.state.componentDidMount) {
+                            window.scrollTo(0, currentHeight);
+
+                            setTimeout(() => {
+                                this.setState({ componentDidMount: false })
+                            }, 1000);
+                        }
+                    }
 
                     return (
                         <div key={`itemMSG${i}`} className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
@@ -216,22 +244,13 @@ class App extends Component {
             }
         };
 
-        let test = (newMsg) => {
-            //if(newMsg) {
-                let msgArr = this.props.message[this.props.rpath.match.params.user];
-                //console.log(msgArr[msgArr.length-1]);
-            //}
-        };
-
         // 새메세지가 왔을때
         let newMsgRender = () => {
-            const scrollTop = document.body.scrollTop;
-            const clientHeight = document.body.clientHeight;
-            const screenHeight = window.screen.height;
-
             // 화면이 하단에 있을때
-            if ( scrollTop >= clientHeight - screenHeight ){
-                this.setState({ hasNewMessage: false });
+            if ( scrollTop >= clientHeight - screenHeight -200 ){
+                setTimeout(() => {
+                    this.setState({ hasNewMessage: false });
+                }, 500);
                 window.scrollTo(0, clientHeight);
             } else {
                 // 화면이 상단에 있음
@@ -259,7 +278,6 @@ class App extends Component {
                   <div id="messages">
                       { this.props.message && mapToList2(this.props.message)}
                   </div>
-                  {this.props.message && test(this.state.newMsg)}
 
                   <ReactCSSTransitionGroup
                       component="div"
