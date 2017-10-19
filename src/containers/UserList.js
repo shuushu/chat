@@ -79,10 +79,15 @@ class UserList extends Component {
         updates['/room/' + KEY] = {
             message: KEY,
             master: this.props.auth.uid,
-            joins: joins
+            msgCnt: 0
         };
 
+        let join = {};
+
+        join['/joins/' + KEY] = joins;
+
         this.props.firebase.ref().update(updates);
+        this.props.firebase.ref().update(join);
 
         window.location.href= '/roomView/' + KEY;
     };

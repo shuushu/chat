@@ -8,14 +8,15 @@ import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
 @firebaseConnect([
-    'room','users', 'message'
+    'room','users', 'message', 'joins'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
         room: dataToJS(firebase, 'room'),
         member: dataToJS(firebase, 'users'),
-        message: dataToJS(firebase, 'message')
+        message: dataToJS(firebase, 'message'),
+        joins: dataToJS(firebase, 'joins')
     })
 )
 
@@ -83,71 +84,73 @@ class RoomList extends Component {
            let UID = this.props.auth.uid;
 
            return Object.keys(data).map((key, index) => {
-               let { joins } = data[key];
+               if(this.props.joins) {
+                   let joins = this.props.joins[key];
 
-                return joins.map((joinsKey) => {
-                    if(UID === joinsKey) {
-                        let getMember = (user) => {
-                            return user.map((key) => {
-                                let { displayName } = this.props.member[key];
-                                return (
-                                    <span key={key}>{displayName}</span>
-                                )
-                            });
-                        };
+                    return joins.map((joinsKey) => {
+                        if(UID === joinsKey) {
+                            let getMember = (user) => {
+                                return user.map((key) => {
+                                    let { displayName } = this.props.member[key];
+                                    return (
+                                        <span key={key}>{displayName}</span>
+                                    )
+                                });
+                            };
 
-                        let getMessage = (data) => {
-                            let msg = this.props.message[data];
+                            let getMessage = (data) => {
+                                let msg = this.props.message[data];
 
-                            if(msg) {
-                                return(
-                                    <strong>{msg[msg.length-1].sendMsg}</strong>
-                                )
-                            }
-                        };
+                                if(msg) {
+                                    return(
+                                        <strong>{msg[msg.length-1].sendMsg}</strong>
+                                    )
+                                }
+                            };
 
-                        let getImage = (user) => {
-                            return user.map((key, i) => {
-                                let { avatarUrl, displayName } = this.props.member[key];
-                                return (
-                                    <img key={`img${key}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
-                                )
-                            });
-                        };
+                            let getImage = (user) => {
+                                return user.map((key, i) => {
+                                    let { avatarUrl, displayName } = this.props.member[key];
+                                    return (
+                                        <img key={`img${key}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
+                                    )
+                                });
+                            };
 
 
 
-                        /*let latestMsg = (msg) => {
-                            this.props.firebase.ref('/message/' + msg).limitToLast(1).on('value', (snapshot) => {
-                                let data = snapshot.val();
-                                //console.log(data);
-                                this.setState({
-                                    latestMsg: 222
-                                })
-                            });
-                        };
+                            /*let latestMsg = (msg) => {
+                                this.props.firebase.ref('/message/' + msg).limitToLast(1).on('value', (snapshot) => {
+                                    let data = snapshot.val();
+                                    //console.log(data);
+                                    this.setState({
+                                        latestMsg: 222
+                                    })
+                                });
+                            };
 
-                        latestMsg(data[key].message)*/
-                        // 참여인원 / {getMember(data[key].joins)}
-                        return (
-                            <li key={key} className="collection-item avatar">
-                                <span className={`thumb circle cnt${data[key].joins.length > 4 ? '4' : data[key].joins.length }`}>{ this.props.member && getImage(data[key].joins) }</span>
-                                <Link to={`/roomView/${key}`}>
-                                    <span>idx : {index}</span>
-                                    <p>{this.props.message && getMessage(data[key].message)}</p>
-                                    <div className="joins">
-                                        참여자 :
-                                        { this.props.member && getMember(data[key].joins) }
-                                    </div>
-                                </Link>
-                                <a className="btn-floating btn-large waves-effect waves-light blue" >
-                                    <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
-                                </a>
-                            </li>
-                        );
-                    }
-                });
-
+                            latestMsg(data[key].message)*/
+                            // 참여인원 / {getMember(data[key].joins)}
+                            return (
+                                <li key={key} className="collection-item avatar">
+                                    <span className={`thumb circle cnt${joins.length > 4 ? '4' : joins.length }`}>
+                                        { this.props.member && getImage(joins) }
+                                    </span>
+                                    <Link to={`/roomView/${key}`}>
+                                        <span>idx : {index}</span>
+                                        <p>{this.props.message && getMessage(data[key].message)}</p>
+                                        <div className="joins">
+                                            참여자 : { this.props.member && getMember(joins) }
+                                        </div>
+                                    </Link>
+                                    <a className="btn-floating btn-large waves-effect waves-light blue" >
+                                        <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
+                                    </a>
+                                </li>
+                            );
+                        }
+                    });
+               }
            });
         };
 

@@ -3,13 +3,14 @@ import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
-import {convertDate, convertTime, convertAPM, latestTime} from '../commonJS/Util';
+import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 @firebaseConnect((props) => {
     return [
         { path: 'room/' + props.rpath.match.params.user },
-        { path: 'message/' + props.rpath.match.params.user }
+        { path: 'message/' + props.rpath.match.params.user },
+        { path: 'joins/' + props.rpath.match.params.user },
     ]
 })
 
@@ -20,6 +21,7 @@ import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
             profile: pathToJS(firebase, 'profile'),
             room: dataToJS(firebase, 'room'),
             message: dataToJS(firebase, 'message'),
+            users: dataToJS(firebase, 'users'),
         })
     }
 )
@@ -53,13 +55,12 @@ class App extends Component {
                 clearTimeout(timer);
             }
             // firebase에 연결될때까지 요청
-            if(this.props.message !== undefined) {
+            if(this.props.message) {
                 // 요청되면 타이머 종료
                 clearTimeout(timer);
-//console.log(this.props.message);
-//return false;
+
                 let that = this;
-                let msgSize = (this.props.message[that.props.rpath.match.params.user]) ? that.props.message[that.props.rpath.match.params.user].length-1 : 0;
+                let msgSize = (this.props.message[that.props.rpath.match.params.user]) ? this.props.message[that.props.rpath.match.params.user].length-1 : 0;
 
                 this.props.firebase.ref('/message/' + this.props.rpath.match.params.user).limitToLast(1).on("child_added", function(snapshot) {
                     // 컴포넌트 렌더링 이후 메세지 수신이 있으면 실행
