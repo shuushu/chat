@@ -33,4 +33,56 @@ const convertDate = (f) => {
     });
 };
 
-export { convertDate }
+
+const convertTime = (tt) => {
+    const date = new Date(tt);
+    const getYear = date.getFullYear();
+    const getMonth = date.getMonth() + 1;
+    const getDate = date.getDate();
+
+    return `${getYear}년 ${getMonth}월 ${getDate}일 (월)`;
+}
+
+const convertAPM = (tt) => {
+    const date = new Date(tt);
+
+    let ampm = '';
+    let hour = date.getHours();
+    let minute = date.getMinutes();
+
+
+    if (hour > 12) {
+        ampm = '오후';
+        hour -= 12;
+    } else if (hour < 12) {
+        ampm = '오전';
+    } else {
+        ampm = '오후';
+    }
+
+    if (minute < 10) {
+        minute = '0' + minute;
+    }
+
+    return `${ampm} ${hour}:${minute}`;
+};
+
+// 최근 1시간전은 분으로 나타내기
+const latestTime = (tt) => {
+    const current = new Date();
+    const date = new Date(tt);
+
+    if(current.getDate() === date.getDate() && current.getHours() - date.getHours() === 0) {
+        let cur = current.getMinutes() - date.getMinutes();
+
+        if(cur === 0) {
+            return '지금';
+        } else {
+            return `${cur}분전`;
+        }
+    } else {
+        return convertAPM(tt);
+    }
+}
+
+export { convertDate, convertTime, convertAPM, latestTime }

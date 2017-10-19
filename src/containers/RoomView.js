@@ -3,7 +3,7 @@ import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
-import {convertDate} from '../commonJS/Util';
+import {convertDate, convertTime, convertAPM, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 @firebaseConnect((props) => {
@@ -30,13 +30,16 @@ class App extends Component {
 
         this.state = {
             redirect: false,
-            ieEmpty: false,
+            isEmpty: false,
             roomViewData: null,
             latestMsg: '',
             hasNewMessage: false,
             size: 20,
             componentDidMount: true
         };
+
+        this.savedNewDate = '';
+
         this.onScroll = this.onScroll.bind(this);
     }
 
@@ -184,7 +187,7 @@ class App extends Component {
             )
         }
 
-        if(this.state.ieEmpty) {
+        if(this.state.isEmpty) {
             alert('개설된 방이 없음');
 
             return (
@@ -205,6 +208,7 @@ class App extends Component {
         let mapToList2 = (message) => {
             let key = this.props.rpath.match.params.user;
             let currentHeight = document.body.scrollHeight;
+            let isNewDate = '';
 
             if(message[key]) {
                 let msgData = message[key];
@@ -225,18 +229,36 @@ class App extends Component {
                         }
                     }
 
+                    // convert TIME
+                    let getDate = convertTime(data.time);
+
+                    if (this.savedNewDate === getDate) {
+                        isNewDate = false;
+                    } else {
+                        isNewDate = true;
+                        this.savedNewDate = getDate;
+                    }
+
                     return (
-                        <div key={`itemMSG${i}`} className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
-                            <div className="imgs">
-                                <img src={data.avatarUrl ? data.avatarUrl : 'http://placehold.it/40x40' } alt=""/>
-                            </div>
-                            <div className="profile">
-                                <div>
-                                    <em>{data.nickName}</em> /
-                                    <time dateTime={data.time}>{data.time}</time>
-                                    <span className="state">{data.state}</span>
+                        <div key={`itemMSG${i}`} >
+                            {isNewDate && (
+                                <div className="division">
+                                    <span className="text">{getDate}</span>
                                 </div>
-                                <p className="message">{data.sendMsg}</p>
+                            )}
+                            <div className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
+
+                                <div className="imgs">
+                                    <img src={data.avatarUrl ? data.avatarUrl : 'http://placehold.it/40x40' } alt=""/>
+                                </div>
+                                <div className="profile">
+                                    <div>
+                                        <em>{data.nickName}</em> /
+                                        <time dateTime={data.time}>{latestTime(data.time)}</time>
+                                        <span className="state">{data.state}</span>
+                                    </div>
+                                    <p className="message">{data.sendMsg}</p>
+                                </div>
                             </div>
                         </div>
                     )
