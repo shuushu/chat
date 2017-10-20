@@ -8,11 +8,11 @@ import 'materialize-css/dist/js/materialize.min';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase'
 
 
-@firebaseConnect([ 'room' ])
+@firebaseConnect([ 'joins' ])
 @connect(
   ({ firebase }) => ({
       auth : pathToJS(firebase, 'auth'),
-      room: dataToJS(firebase, 'room')
+      joins: dataToJS(firebase, 'joins')
   })
 )
 
@@ -32,13 +32,13 @@ class Login extends Component {
     }
 */
 
-    componentWillReceiveProps ({ auth, room }) {
+    componentWillReceiveProps ({ auth, joins }) {
         // 로그인 되었을때
         if (auth) {
-            if(room) {
-                for (let i in room) {
+            if(joins) {
+                for (let i in joins) {
                     // 로그인 한 아이디에 지정된 채팅룸이 있는지 검색한다
-                    room[i].joins.map((data) => {
+                    joins[i].map((data) => {
                         if (data === auth.uid) {
                             this.setState({isRoomList: true});
                         } else {
@@ -47,10 +47,6 @@ class Login extends Component {
                     });
                 }
             }
-            /*this.setState({
-                redirect: true,
-                uid: auth.uid
-            })*/
         }
     }
     // 로그인 / 회원가입 모드 변경

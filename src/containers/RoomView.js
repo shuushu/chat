@@ -2,15 +2,19 @@ import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import '../scss/roomView.css';
-import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-redux-firebase';
 import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
+let populates;
+
 @firebaseConnect((props) => {
+    populates = [{ child: props.rpath.match.params.user, root: 'users'}];
+
     return [
         { path: 'room/' + props.rpath.match.params.user },
         { path: 'message/' + props.rpath.match.params.user },
-        { path: 'joins/' + props.rpath.match.params.user },
+        { path: 'joins/' , populates}
     ]
 })
 
@@ -18,10 +22,10 @@ import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            profile: pathToJS(firebase, 'profile'),
             room: dataToJS(firebase, 'room'),
             message: dataToJS(firebase, 'message'),
-            users: dataToJS(firebase, 'users'),
+            joins: dataToJS(firebase, 'joins'),
+            users: populatedDataToJS(firebase, 'users', populates),
         })
     }
 )
@@ -37,7 +41,8 @@ class App extends Component {
             latestMsg: '',
             hasNewMessage: false,
             size: 20,
-            componentDidMount: true
+            componentDidMount: true,
+            user: []
         };
 
         this.savedNewDate = '';
@@ -140,13 +145,10 @@ class App extends Component {
         }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
-
         const message = {
             uid: this.props.auth.uid,
-            nickName: this.props.profile.displayName,
-            state: this.props.room[KEY].joins.length-1,
+            state: this.props.joins[KEY].length-1,
             sendMsg: this.state.latestMsg,
-            avatarUrl: this.props.profile.avatarUrl,
             time: currentTime
         };
 
@@ -194,6 +196,9 @@ class App extends Component {
             return (
                 <Redirect to="/RoomList" />
             )
+        }
+        let getUserInfo = (uid) => {
+            console.log(this.props.users)
         }
 
 
@@ -250,11 +255,11 @@ class App extends Component {
                             <div className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
 
                                 <div className="imgs">
-                                    <img src={data.avatarUrl ? data.avatarUrl : 'http://placehold.it/40x40' } alt=""/>
+                                    {<img src={ this.props.users ? this.props.users[data.uid].avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
                                 </div>
                                 <div className="profile">
                                     <div>
-                                        <em>{data.nickName}</em> /
+                                        <em>{ this.props.users && this.props.users[data.uid].displayName }</em> /
                                         <time dateTime={data.time}>{latestTime(data.time)}</time>
                                         <span className="state">{data.state}</span>
                                     </div>

@@ -31,11 +31,6 @@ class RoomList extends Component {
     };
 
     componentDidMount() {
-        this.props.firebase.ref('/message/H5V4crngi0f_g6HAAAAD').on('value', (snapshot) => {
-            this.setState({
-                message: snapshot.val()
-            })
-        });
 
     }
 
@@ -91,10 +86,12 @@ class RoomList extends Component {
                         if(UID === joinsKey) {
                             let getMember = (user) => {
                                 return user.map((key) => {
-                                    let { displayName } = this.props.member[key];
-                                    return (
-                                        <span key={key}>{displayName}</span>
-                                    )
+                                    if(this.props.member[key]) {
+                                        let { displayName } = this.props.member[key];
+                                        return (
+                                            <span key={key}>{displayName}</span>
+                                        )
+                                    }
                                 });
                             };
 
@@ -110,10 +107,12 @@ class RoomList extends Component {
 
                             let getImage = (user) => {
                                 return user.map((key, i) => {
-                                    let { avatarUrl, displayName } = this.props.member[key];
-                                    return (
-                                        <img key={`img${key}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
-                                    )
+                                    if(this.props.member[key]) {
+                                        let { avatarUrl, displayName } = this.props.member[key];
+                                        return (
+                                            <img key={`img${key}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
+                                        )
+                                    }
                                 });
                             };
 
