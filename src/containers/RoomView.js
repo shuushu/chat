@@ -7,13 +7,17 @@ import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 let populates;
+let P_USER, P_KEY;
 
 @firebaseConnect((props) => {
-    populates = [{ child: props.rpath.match.params.user, root: 'users'}];
+    P_USER = props.rpath.match.params.user;
+    P_KEY = props.rpath.match.params.key;
+
+    populates = [{ child: P_KEY, root: 'users'}];
 
     return [
-        { path: 'room/' + props.rpath.match.params.user },
-        { path: 'message/' + props.rpath.match.params.user },
+        { path: 'room/'},
+        { path: 'message/'},
         { path: 'joins/' , populates}
     ]
 })
@@ -22,8 +26,8 @@ let populates;
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: dataToJS(firebase, 'room'),
-            message: dataToJS(firebase, 'message'),
+            room: dataToJS(firebase, 'room/' + P_USER + '/' + P_KEY),
+            message: dataToJS(firebase, 'message/' + P_KEY),
             joins: dataToJS(firebase, 'joins'),
             users: populatedDataToJS(firebase, 'users', populates),
         })
@@ -75,13 +79,13 @@ class App extends Component {
                             const clientHeight = document.body.clientHeight;
                             const screenHeight = window.screen.height;
                             // 읽음 표시상태 로직
-                            if(scrollTop >= clientHeight - screenHeight -200) {
+                            //if(scrollTop >= clientHeight - screenHeight -200) {
                                 let ROOM_KEY = that.props.rpath.match.params.user;
 
                                 that.props.firebase.ref(`/message/${ROOM_KEY}/${snapshot.key}`).update({
                                         state: snapshot.val().state - 1
                                 }, function(){});
-                            }
+                            //}
                             that.setState({ hasNewMessage: true })
                         }
                     }
@@ -95,9 +99,11 @@ class App extends Component {
     }
 
     componentWillReceiveProps ({ auth, room }) {
+        console.log(room);
+        return false;
         if(room) {
             if(!room[this.props.rpath.match.params.user]) {
-                window.location.href = '/roomList';
+                window.location.href = '/RoomList/' + P_USER + '/'  + P_KEY;
             }
         }
 
@@ -137,7 +143,6 @@ class App extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault();
-        const KEY = this.props.rpath.match.params.user;
 
         if(this.state.latestMsg === '') {
             alert('메세지를 입력하세요');
@@ -147,18 +152,18 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
         const message = {
             uid: this.props.auth.uid,
-            state: this.props.joins[KEY].length-1,
+            state: 0,
             sendMsg: this.state.latestMsg,
             time: currentTime
         };
 
-        let msg = this.props.message[KEY];
+        let msg = this.props.message[P_KEY];
             msg = msg || [];
             msg.push(message);
 
         let that = this;
 
-        this.props.firebase.ref(`/message/${KEY}`).update(msg, function(){
+        this.props.firebase.ref(`/message/${P_KEY}`).update(msg, function(){
             window.scrollTo(0, document.body.scrollHeight);
 
             that.setState({
@@ -194,7 +199,7 @@ class App extends Component {
             alert('개설된 방이 없음');
 
             return (
-                <Redirect to="/RoomList" />
+                <Redirect to={`/RoomList/${P_USER}/${P_KEY}`} />
             )
         }
         let getUserInfo = (uid) => {
@@ -261,7 +266,9 @@ class App extends Component {
                                     <div>
                                         <em>{ this.props.users && this.props.users[data.uid].displayName }</em> /
                                         <time dateTime={data.time}>{latestTime(data.time)}</time>
-                                        <span className="state">{data.state}</span>
+                                        {data.state > 0 && (
+                                            <span className="state">{data.state}</span>
+                                        )}
                                     </div>
                                     <p className="message">{data.sendMsg}</p>
                                 </div>
@@ -298,7 +305,7 @@ class App extends Component {
         return (
               <div className="App">
                   <div>
-                      <Link to="/roomList">뒤로</Link>
+                      <Link to={`/RoomList/${P_USER}/${P_KEY}`}>뒤로</Link>
                       참여인원:
                       { this.state.roomViewData !== null && getMember() }
                   </div>

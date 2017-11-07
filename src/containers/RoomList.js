@@ -1,24 +1,80 @@
+import { mapValues } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-redux-firebase';
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
-@firebaseConnect([
-    'room','users', 'message', 'joins'
-])
+let populates;
+let P_USER, P_MSG;
+
+const populate = { child: '175430085458', root: 'joins' }
+
+@firebaseConnect(
+    ({ params }) => ([
+        { path: 'room', populates: [populate] } // places "goals" and "users" in redux
+    ])
+)
 @connect(
-    ({ firebase }) => ({
-        auth: pathToJS(firebase, 'auth'),
-        room: dataToJS(firebase, 'room'),
-        member: dataToJS(firebase, 'users'),
-        message: dataToJS(firebase, 'message'),
-        joins: dataToJS(firebase, 'joins')
+    ({ firebase }, { params }) => ({
+        // mapValues keeps items in list under their key
+        goals: mapValues(dataToJS(firebase, 'room/RiHdrLxl81NDFPmejv30j6YytQG3'), (child) => {
+            console.log(child)
+            // no matching child parameter (no user property on goal)
+            if (!child[populate.child]) {
+                return child
+            }
+            // no matching child does not exist in root list (no user matching user property)
+            if (!dataToJS(firebase, `${populate.root}/${child[populate.child]}`)) {
+                return child
+            }
+            console.log(...child)
+            // populate child
+            return {
+                ...child,
+                key: child[populate.child], // attach key to new object
+                [populate.child]: dataToJS(firebase, `${populate.root}/${child[populate.child]}`)
+            }
+        })
     })
 )
+/*@firebaseConnect((props) => {
+    P_USER = props.rpath.match.params.user;
+
+    populates = [
+        { child: 'test', root: 'users'},
+        { child: '175430085458', root: 'room'}
+    ];
+
+    return [
+        //{ path: 'room/' + P_USER},
+        { path: '/message', populates},
+        {
+            path: 'room',
+            storeAs: 'todos',
+            queryParams: [ `orderByChild=owner`, `equalTo=RiHdrLxl81NDFPmejv30j6YytQG3`]
+        },
+       /!* { path: 'joins'},
+        { path: 'users'}*!/
+    ]
+})
+
+
+@connect(
+    ({ firebase }) => ({
+        //room: dataToJS(firebase, 'room/' + P_USER),
+        //auth: pathToJS(firebase, 'auth'),
+        cc: populatedDataToJS(firebase, 'users', [populates[0]]),
+        cc2: populatedDataToJS(firebase, 'room', [populates[1]]),
+        anonymousProjects: dataToJS(firebase, 'room') // path matches storeAs
+        //joins: dataToJS(firebase, 'joins'),
+        /!*users: dataToJS(firebase, 'users'),*!/
+    })
+)*/
+
 
 class RoomList extends Component {
     state = {
@@ -77,6 +133,10 @@ class RoomList extends Component {
 
         let mapToList = (data) => {
            let UID = this.props.auth.uid;
+           console.log(data, UID)
+           return (
+               <div>sdsd</div>
+           )
 
            return Object.keys(data).map((key, index) => {
                if(this.props.joins) {

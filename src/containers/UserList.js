@@ -76,9 +76,8 @@ class UserList extends Component {
         // 룸정보 저장 PK = 실시간타임
         const KEY = convertDate('yymmddhhmmss');
 
-        updates['/room/' + KEY] = {
+        updates['/room/' + this.props.auth.uid + '/' + KEY] = {
             message: KEY,
-            master: this.props.auth.uid,
             msgCnt: 0
         };
 
@@ -89,7 +88,7 @@ class UserList extends Component {
         this.props.firebase.ref().update(updates);
         this.props.firebase.ref().update(join);
 
-        window.location.href= '/roomView/' + KEY;
+        window.location.href= '/roomView/' + this.props.auth.uid + '/' + KEY;
     };
 
 

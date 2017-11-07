@@ -56,3 +56,9 @@ version1. 2017-08
 - [진행중 이슈](https://github.com/shuushu/chat/issues?q=is%3Aopen+is%3Aissue)
 - [종료된 이슈](https://github.com/shuushu/chat/issues?q=is%3Aissue+is%3Aclosed)
 
+
+### 참고자료
+- [Populated Data](https://github.com/prescottprue/react-redux-firebase/issues/40)
+- [populateDataToJS](https://github.com/prescottprue/react-redux-firebase/issues/216)
+- [queries#storeAs](http://react-redux-firebase.com/docs/queries#storeAs)
+
