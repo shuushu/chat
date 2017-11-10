@@ -48,3 +48,6 @@
 .cnt4 .i1{ top: 0;right: 0;z-index: 3; }
 .cnt4 .i2{ bottom: 0;left: 0;z-index: 3; }
 .cnt4 .i3{ bottom: 0;right: 0;z-index: 3; }
+.hide-on-med-and-down{
+    display: block !important;
+}

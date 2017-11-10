@@ -1,3 +1,4 @@
+import { mapValues, size } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -6,33 +7,49 @@ import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-re
 import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
-let populates;
-let P_USER, P_KEY;
+const populate = { child: 'null', root: 'chat' }
 
-@firebaseConnect((props) => {
-    P_USER = props.rpath.match.params.user;
-    P_KEY = props.rpath.match.params.key;
-
-    populates = [{ child: P_KEY, root: 'users'}];
-
-    return [
-        { path: 'room/'},
-        { path: 'message/'},
-        { path: 'joins/' , populates}
-    ]
-})
+@firebaseConnect(
+    () => {
+        return ([
+            { path: 'chat' , populates: [populate] } // places "goals" and "users" in redux , populates: [populate]
+        ])
+    }
+)
 
 @connect(
-    ({ firebase }) => {
+    ({ firebase }, props) => {
+        let uid, user = props.firebase.auth().currentUser;
+
+        if (user !== null) {
+            uid = user.uid;
+        }
+
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: dataToJS(firebase, 'room/' + P_USER + '/' + P_KEY),
-            message: dataToJS(firebase, 'message/' + P_KEY),
-            joins: dataToJS(firebase, 'joins'),
-            users: populatedDataToJS(firebase, 'users', populates),
+            room: mapValues(dataToJS(firebase, 'chat/room/' + uid + '/' + props.rpath.match.params.key), (value, key) => {
+                if(key === 'message') {
+                     let msg = dataToJS(firebase, 'chat/message/' + value);
+
+                     msg.map((obj) => {
+                         let UID = obj.writer;
+
+                         obj.writer = mapValues(dataToJS(firebase, 'chat/users/' + obj.writer), (value, key) => {
+                             if(key === 'providerData') {
+                                 value = UID;
+                             }
+                             return value;
+                         });
+                     });
+
+                    value = msg;
+                }
+                return value;
+            }),
         })
     }
 )
+
 
 class App extends Component {
     constructor(props) {
@@ -59,7 +76,7 @@ class App extends Component {
         window.addEventListener('scroll', this.onScroll, true);
 
         let timer;
-        let repeat = () => {
+        /*let repeat = () => {
             if(timer){
                 clearTimeout(timer);
             }
@@ -95,18 +112,10 @@ class App extends Component {
             }
         };
 
-        repeat();
+        repeat();*/
     }
 
-    componentWillReceiveProps ({ auth, room }) {
-        console.log(room);
-        return false;
-        if(room) {
-            if(!room[this.props.rpath.match.params.user]) {
-                window.location.href = '/RoomList/' + P_USER + '/'  + P_KEY;
-            }
-        }
-
+    componentWillReceiveProps ({ auth }) {
         if (auth === null) {
             this.setState({
                 redirect: true
@@ -150,22 +159,20 @@ class App extends Component {
         }
 
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
-        const message = {
-            uid: this.props.auth.uid,
+        const context = {
+            writer: this.props.auth.uid,
             state: 0,
-            sendMsg: this.state.latestMsg,
-            time: currentTime
+            text: this.state.latestMsg,
+            date: currentTime
         };
 
-        let msg = this.props.message[P_KEY];
-            msg = msg || [];
-            msg.push(message);
-
+        let data = {};
         let that = this;
 
-        this.props.firebase.ref(`/message/${P_KEY}`).update(msg, function(){
-            window.scrollTo(0, document.body.scrollHeight);
+        data[size(this.props.room.message)] = context;
 
+        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).update(data, () => {
+            window.scrollTo(0, document.body.scrollHeight);
             that.setState({
                 latestMsg: '',
                 size: that.state.size + 1
@@ -199,7 +206,7 @@ class App extends Component {
             alert('개설된 방이 없음');
 
             return (
-                <Redirect to={`/RoomList/${P_USER}/${P_KEY}`} />
+                <Redirect to={`/Login`} />
             )
         }
         let getUserInfo = (uid) => {
@@ -217,6 +224,28 @@ class App extends Component {
         };
 
         let mapToList2 = (message) => {
+            return message.map((key, i) => {
+                let { avatarUrl, displayName } = key.writer;
+
+                return (
+                    <div key={`itemMSG${i}`} className={key.writer.providerData === this.props.auth.uid ? 'mine' : 'list'}>
+                        <div className="imgs">
+                            {<img src={ avatarUrl ? avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
+                        </div>
+                        <div className="profile">
+                            <div>
+                                <em>{ displayName }</em> /
+                                <time dateTime={key.date}>{latestTime(key.date)}</time>
+                            </div>
+                            <p className="message">{key.text}</p>
+                        </div>
+                    </div>
+                );
+            });
+
+
+
+/*
             let key = this.props.rpath.match.params.user;
             let currentHeight = document.body.scrollHeight;
             let isNewDate = '';
@@ -276,7 +305,7 @@ class App extends Component {
                         </div>
                     )
                 });
-            }
+            }*/
         };
 
         // 새메세지가 왔을때
@@ -305,13 +334,13 @@ class App extends Component {
         return (
               <div className="App">
                   <div>
-                      <Link to={`/RoomList/${P_USER}/${P_KEY}`}>뒤로</Link>
+                      <Link to={`/RoomList`}>뒤로</Link>
                       참여인원:
                       { this.state.roomViewData !== null && getMember() }
                   </div>
                   <hr/>
                   <div id="messages">
-                      { this.props.message && mapToList2(this.props.message)}
+                      { Array.isArray(this.props.room.message) && mapToList2(this.props.room.message)}
                   </div>
 
                   <ReactCSSTransitionGroup

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { firebaseConnect, pathToJS } from 'react-redux-firebase';
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
 import update from 'react-addons-update'
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
@@ -10,13 +10,12 @@ import '../scss/userList.css';
 import {convertDate} from '../commonJS/Util';
 
 @firebaseConnect([
-    'users'
+    'chat'
 ])
 @connect(
     ({ firebase }) => ({
         auth: pathToJS(firebase, 'auth'),
-        profile: pathToJS(firebase, 'profile'),
-        member: pathToJS(firebase, 'ordered'),
+        member: dataToJS(firebase, 'chat/users'),
     })
 )
 
@@ -76,19 +75,18 @@ class UserList extends Component {
         // 룸정보 저장 PK = 실시간타임
         const KEY = convertDate('yymmddhhmmss');
 
-        updates['/room/' + this.props.auth.uid + '/' + KEY] = {
-            message: KEY,
-            msgCnt: 0
-        };
+        joins.map((uid, idx) => {
+            updates['/chat/room/' + uid + '/' + KEY] = {
+                message: KEY,
+                join: joins,
+                msgCnt: 0,
+                roomState: 0
+            };
 
-        let join = {};
+            this.props.firebase.ref().update(updates);
+        });
 
-        join['/joins/' + KEY] = joins;
-
-        this.props.firebase.ref().update(updates);
-        this.props.firebase.ref().update(join);
-
-        window.location.href= '/roomView/' + this.props.auth.uid + '/' + KEY;
+        window.location.href= '/roomView/' + KEY;
     };
 
 
@@ -100,7 +98,35 @@ class UserList extends Component {
         }
 
         let mapToUserList = (data) => {
-            if(data){
+
+            return Object.keys(data).map((key, i)  => {
+                let { avatarUrl, displayName, email } = data[key];
+
+                if(this.props.auth.uid === key) {
+                    return;
+                }
+
+
+                return (
+                    <li className="item" key={`users${i}`}>
+                        <input type="checkbox" data-idx={i} onChange={this.handleChange} id={key} />
+                        <label htmlFor={key}>
+                            <img src={avatarUrl} className="thumb" alt={`${displayName} 썸네일`}/>
+                            <div className="context">
+                                <strong>{displayName}</strong>
+                                {email}
+                            </div>
+                        </label>
+                    </li>
+                );
+            });
+
+
+
+
+
+
+            /*if(data){
                 // props가 갱신이 안될때 리턴
                 if(!data.users) return;
 
@@ -125,13 +151,13 @@ class UserList extends Component {
                         </li>
                     );
                 })
-            }
+            }*/
         };
 
         return (
             <div className="userList">
                 <ul className="itemWrap">
-                    {mapToUserList(this.props.member)}
+                    { this.props.member && mapToUserList(this.props.member) }
                 </ul>
                 <footer className="foot">
                     <button className={`btn waves-effect waves-light ${!this.state.isCreate && 'disabled'}`} type="submit" name="action" onClick={this.createRoom} >

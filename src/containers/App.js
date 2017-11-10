@@ -10,8 +10,8 @@ class App extends Component {
                     <Route exact path="/" component={RoomList} />
                     <Route path="/Login" component={Login} />
                     <Route path="/UserList" component={UserList} />
-                    <Route path="/roomList/:user" render={(path) => ( <RoomList rpath={path} /> )}  />
-                    <Route path="/roomView/:user/:key" render={(path) => ( <RoomView rpath={path} /> )}  />
+                    <Route path="/roomList" component={RoomList} />
+                    <Route path="/roomView/:key" render={(path) => ( <RoomView rpath={path} /> )}  />
                 </Switch>
             </div>
         )

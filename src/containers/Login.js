@@ -1,20 +1,36 @@
+import { size } from 'lodash';
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { convertDate } from '../commonJS/Util';
+import { connect } from 'react-redux';
+import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase'
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
-import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase'
 
 
-@firebaseConnect([ 'joins' ])
+
+@firebaseConnect({
+    path: 'chat'
+})
+
 @connect(
-  ({ firebase }) => ({
-      auth : pathToJS(firebase, 'auth'),
-      joins: dataToJS(firebase, 'joins')
-  })
+    ({ firebase }, props) => {
+        let path, user = props.firebase.auth().currentUser;
+
+        if (user !== null) {
+            path = size(dataToJS(firebase, 'chat/room/' + user.uid))
+        } else {
+            path = 0;
+        }
+
+        return ({
+            auth: pathToJS(firebase, 'auth'),
+            room: path
+        })
+    }
 )
+
 
 class Login extends Component {
     state = {
@@ -26,26 +42,18 @@ class Login extends Component {
         isRoomList: false, // 룸리스트로 리다이렉션 flag
         uid: ''
     };
-/*
-    shouldComponentUpdate(nextProps){
-        return (JSON.stringify(nextProps) != JSON.stringify(this.props));
-    }
-*/
 
-    componentWillReceiveProps ({ auth, joins }) {
+
+    componentWillReceiveProps ({ auth, room }) {
         // 로그인 되었을때
         if (auth) {
-            if(joins) {
-                for (let i in joins) {
-                    // 로그인 한 아이디에 지정된 채팅룸이 있는지 검색한다
-                    joins[i].map((data) => {
-                        if (data === auth.uid) {
-                            this.setState({isRoomList: true});
-                        } else {
-                            this.setState({isUserList: true});
-                        }
-                    });
-                }
+            console.log(room);
+
+            // 방이 있을때
+            if(room > 0) {
+                this.setState({ isRoomList: true });
+            } else {
+                this.setState({ isUserList: true });
             }
         }
     }
@@ -112,7 +120,7 @@ class Login extends Component {
     render() {
         if(this.state.isRoomList) {
             return (
-                <Redirect to={`/roomList/${this.state.uid}`} />
+                <Redirect to='/roomList' />
             )
         }
 
