@@ -1,4 +1,4 @@
-import { mapValues, size, slice, lastIndexOf } from 'lodash';
+import { mapValues, size, slice, lastIndexOf, last } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -76,8 +76,11 @@ class App extends Component {
         this.clientHeight = document.body.clientHeight;
         this.screenHeight = window.screen.height;
 
-        window.scrollTo(0, document.body.scrollHeight);
         window.addEventListener('scroll', this.onScroll, true);
+
+        setTimeout(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+        }, 3000);
 
         let timer;
         /*let repeat = () => {
@@ -135,7 +138,7 @@ class App extends Component {
     onScroll() {
         const scrollTop = window.scrollY;
 
-        if ( scrollTop < 100) {
+        if ( scrollTop === 0) {
             // 이전 데이터 보여줌
             this.handleLoad();
         }
@@ -191,8 +194,8 @@ class App extends Component {
 
     handleLoad = (e) => {
         let max = this.props.room.message.length;
-        let current = (this.state.size + 10 >= max) ? max : this.state.size + 10;
-
+        let current = (this.state.page + 10 >= max) ? max : this.state.page + 10;
+console.log(current);
         this.setState({ page: current });
     };
 
@@ -210,10 +213,6 @@ class App extends Component {
                 <Redirect to={`/Login`} />
             )
         }
-        let getUserInfo = (uid) => {
-            console.log(this.props.users)
-        }
-
 
         // Redux Props에서 state로 전달이 되면 실행
         let getMember = () => {
@@ -315,6 +314,14 @@ class App extends Component {
         let newMsgRender = () => {
             let scrollTop = window.scrollY;
             this.clientHeight = document.body.clientHeight;
+
+            let { providerData } = last(this.props.room.message).writer;
+
+            if(providerData === this.props.auth.uid) {
+                window.scrollTo(0, this.clientHeight);
+                return false;
+            }
+
 
             // 화면이 하단에 있을때
             if ( scrollTop >= this.clientHeight - this.screenHeight - 200 ){
