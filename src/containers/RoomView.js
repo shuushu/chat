@@ -1,4 +1,4 @@
-import { mapValues, size } from 'lodash';
+import { mapValues, size, slice, lastIndexOf } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -12,24 +12,18 @@ const populate = { child: 'null', root: 'chat' }
 @firebaseConnect(
     () => {
         return ([
-            { path: 'chat' , populates: [populate] } // places "goals" and "users" in redux , populates: [populate]
+            { path: 'chat' , populates: [populate], queryParams: ['limitToFirst=5']} // places "goals" and "users" in redux , populates: [populate]
         ])
     }
 )
 
 @connect(
     ({ firebase }, props) => {
-        let uid, user = props.firebase.auth().currentUser;
-
-        if (user !== null) {
-            uid = user.uid;
-        }
-
         return ({
             auth: pathToJS(firebase, 'auth'),
             room: mapValues(dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key), (value, key) => {
                 if(key === 'message') {
-                     let msg = dataToJS(firebase, 'chat/message/' + value);
+                     let msg = dataToJS(firebase, 'chat/message/' + value, false);
 
                      if(!msg) {
                          return false;
@@ -65,18 +59,24 @@ class App extends Component {
             roomViewData: null,
             latestMsg: '',
             hasNewMessage: false,
-            size: 20,
+            page: 10,
             componentDidMount: true,
             user: []
         };
 
         this.savedNewDate = '';
+        this.screenHeight = 0;
+        this.clientHeight = 0;
 
         this.onScroll = this.onScroll.bind(this);
     }
 
 
     componentDidMount() {
+        this.clientHeight = document.body.clientHeight;
+        this.screenHeight = window.screen.height;
+
+        window.scrollTo(0, document.body.scrollHeight);
         window.addEventListener('scroll', this.onScroll, true);
 
         let timer;
@@ -134,18 +134,14 @@ class App extends Component {
 
     onScroll() {
         const scrollTop = window.scrollY;
-        const clientHeight = document.body.clientHeight;
-        const screenHeight = window.screen.height;
 
         if ( scrollTop < 100) {
             // 이전 데이터 보여줌
             this.handleLoad();
         }
 
-        if ( scrollTop >= clientHeight - screenHeight ){
+        if ( scrollTop >= this.clientHeight - this.screenHeight ){
             //console.clear();
-        } else {
-
         }
     }
 
@@ -166,6 +162,7 @@ class App extends Component {
         const context = {
             writer: this.props.auth.uid,
             state: 0,
+            type: 0,
             text: this.state.latestMsg,
             date: currentTime
         };
@@ -176,7 +173,7 @@ class App extends Component {
         data[size(this.props.room.message)] = context;
 
         this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).update(data, () => {
-            window.scrollTo(0, document.body.scrollHeight);
+            //window.scrollTo(0, document.body.scrollHeight);
             that.setState({
                 latestMsg: '',
                 size: that.state.size + 1
@@ -186,26 +183,20 @@ class App extends Component {
                 that.props.room.join.forEach((key) => {
                     that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
                 });
-            }
+            };
+
+            that.setState({ hasNewMessage: true })
         });
     };
 
     handleLoad = (e) => {
-        if(e) {
-            e.preventDefault();
-        }
-
-        let max = this.props.message[this.props.rpath.match.params.user].length;
+        let max = this.props.room.message.length;
         let current = (this.state.size + 10 >= max) ? max : this.state.size + 10;
 
-        this.setState({ size: current });
+        this.setState({ page: current });
     };
 
     render() {
-        const scrollTop = window.scrollY;
-        const clientHeight = document.body.clientHeight;
-        const screenHeight = window.screen.height;
-
         if(this.state.redirect) {
             return (
                 <Redirect to="/Login" />
@@ -234,6 +225,8 @@ class App extends Component {
         };
 
         let mapToList2 = (message) => {
+            message = slice(message, message.length-this.state.page, message.length);
+
             return message.map((key, i) => {
                 let { avatarUrl, displayName } = key.writer;
 
@@ -320,12 +313,15 @@ class App extends Component {
 
         // 새메세지가 왔을때
         let newMsgRender = () => {
+            let scrollTop = window.scrollY;
+            this.clientHeight = document.body.clientHeight;
+
             // 화면이 하단에 있을때
-            if ( scrollTop >= clientHeight - screenHeight -200 ){
+            if ( scrollTop >= this.clientHeight - this.screenHeight - 200 ){
                 setTimeout(() => {
                     this.setState({ hasNewMessage: false });
                 }, 500);
-                window.scrollTo(0, clientHeight);
+                window.scrollTo(0, this.clientHeight);
             } else {
                 // 화면이 상단에 있음
                 setTimeout(() => {

@@ -73,10 +73,6 @@ class RoomList extends Component {
         latestMsg: '',
     };
 
-
-
-
-
     componentWillReceiveProps ({ auth }) {
         if (auth === null) {
             this.setState({
