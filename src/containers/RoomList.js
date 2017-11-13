@@ -1,4 +1,4 @@
-import { mapValues } from 'lodash';
+import { mapValues, size, isEmpty } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -30,15 +30,33 @@ const populate = { child: 'null', root: 'chat' }
         return ({
             //myProjects: populatedDataToJS(firebase, 'myProjects'),
             // mapValues keeps items in list under their key
-            room: mapValues(dataToJS(firebase, 'chat/room/' + uid), (child) => {
-                let { join, message, msg } = child;
-                let users = dataToJS(firebase, 'chat/users');
+            room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
+                let obj = {};
+                //console.log('key : ' + key + '/' + child.join  + '\n UID : ' + uid )
 
-                join.forEach((key, idx) => {
-                    join[idx] = users[key]
-                });
+                for(let i=0;i<child.join.length; i++) {
+                    if(uid === child.join[i]) {
+                        let { join, message } = child;
+                        let users = dataToJS(firebase, 'chat/users');
 
-                return child;
+                        join.forEach((key, idx) => {
+                            join[idx] = users[key]
+                        });
+
+                        let msg, data = dataToJS(firebase, 'chat/message/' + message);
+
+                        if(data) {
+                            msg = data[data.length-1];
+                        } else {
+                            msg = null;
+                        }
+
+                        child.message = msg;
+                        obj = child;
+                    }
+                }
+
+                return obj;
             }),
             auth: pathToJS(firebase, 'auth')
         })
@@ -103,64 +121,70 @@ class RoomList extends Component {
         let roomCnt = 0;
 
         let mapToList = (data) => {
-           return Object.keys(data).map((key, index) => {
-               let { join, message, roomState } = data[key];
-               // roomState 0 비활성화
-               if(roomState <= 0) {
-                   ++ roomCnt;
+            if(!isEmpty(data)) {
+                return Object.keys(data).map((key, index) => {
 
-                   if(roomCnt <= 0) {
-                       return (<li>sdsd</li>);
+                   if(size(data[key]) < 1){
+                       return false;
                    }
 
-                   return;
-               }
+                   let { join, message, roomState } = data[key];
 
-                let getMember = (user) => {
-                    return user.map((key, i) => {
-                        let { displayName } = key;
+                   // roomState 0 비활성화
+                   if(roomState <= 0) {
+                       ++ roomCnt;
+                       if(roomCnt <= 0) {
+                           return (<li>참여방 없음</li>);
+                       }
+                       return;
+                   }
 
-                        return (
-                            <span key={`displayName${i}`}>{displayName}</span>
-                        )
-                    });
+                    let getMember = (user) => {
+                        return user.map((key, i) => {
+                            let { displayName } = key;
 
-                };
+                            return (
+                                <span key={`displayName${i}`}>{displayName}</span>
+                            )
+                        });
+                    };
 
-                let getMessage = (data) => {
-                    let msg = this.props.message[data];
+                    let getMessage = (data) => {
+                        let msg = this.props.message[data];
 
-                    if(msg) {
-                        return(
-                            <strong>{msg[msg.length-1].sendMsg}</strong>
-                        )
-                    }
-                };
+                        if(msg) {
+                            return(
+                                <strong>{msg[msg.length-1].sendMsg}</strong>
+                            )
+                        }
+                    };
 
-                let getImage = (user) => {
-                    return user.map((key, i) => {
-                        let { avatarUrl, displayName } = key;
+                    let getImage = (user) => {
+                        return user.map((key, i) => {
+                            let { avatarUrl, displayName } = key;
 
-                        return (
-                            <img key={`img${i}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
-                        )
-                    });
-                };
+                            return (
+                                <img key={`img${i}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
+                            )
+                        });
+                    };
 
-                return (
-                    <li key={`li-${key}`} className="collection-item avatar">
-                        <span className={`thumb circle cnt${join.length > 4 ? '4' : join.length }`}>{ getImage(join) }</span>
-                        <Link to={`/roomView/${key}`}>
-                            <span>idx : {index}</span>
-                            <p>{this.props.message && getMessage(data[key].message)}</p>
-                            <div className="joins">참여자 : { getMember(join) }</div>
-                        </Link>
-                        <a className="btn-floating btn-large waves-effect waves-light blue" >
-                            <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
-                        </a>
-                    </li>
-                );
-           });
+                    return (
+                        <li key={`li-${key}`} className="collection-item avatar">
+                            <span className={`thumb circle cnt${join.length > 4 ? '4' : join.length }`}>{ getImage(join) }</span>
+                            <Link to={`/roomView/${key}`}>
+                                <span>idx : {index}</span>
+                                <p>{this.props.message && getMessage(data[key].message)}</p>
+                                <div className="joins">참여자 : { getMember(join) }</div>
+                                <div>{ message && message.text }</div>
+                            </Link>
+                            <a className="btn-floating btn-large waves-effect waves-light blue" >
+                                <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
+                            </a>
+                        </li>
+                    );
+               });
+           }
         };
 
         return (

@@ -1,4 +1,4 @@
-import { size } from 'lodash';
+import { mapValues, size } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect } from 'react-router-dom';
 import { convertDate } from '../commonJS/Util';
@@ -9,24 +9,39 @@ import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 
 
+const populate = { child: 'null', root: 'chat' }
 
-@firebaseConnect({
-    path: 'chat'
-})
+@firebaseConnect(
+    () => {
+        return ([
+            { path: 'chat' , populates: [populate] } // places "goals" and "users" in redux , populates: [populate]
+        ])
+    }
+)
 
 @connect(
     ({ firebase }, props) => {
-        let path, user = props.firebase.auth().currentUser;
+        let uid, user = props.firebase.auth().currentUser;
 
         if (user !== null) {
-            path = size(dataToJS(firebase, 'chat/room/' + user.uid))
-        } else {
-            path = 0;
+            uid = user.uid;
         }
 
         return ({
-            auth: pathToJS(firebase, 'auth'),
-            room: path
+            //myProjects: populatedDataToJS(firebase, 'myProjects'),
+            // mapValues keeps items in list under their key
+            room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
+
+                let roomCnt = 0;
+
+                for(let i=0;i<child.join.length; i++) {
+                    if(uid === child.join[i]) {
+                        roomCnt++;
+                    }
+                }
+                return roomCnt;
+            }),
+            auth: pathToJS(firebase, 'auth')
         })
     }
 )
@@ -47,13 +62,20 @@ class Login extends Component {
     componentWillReceiveProps ({ auth, room }) {
         // 로그인 되었을때
         if (auth) {
-            console.log(room);
+            let roomcnt = 0, cnt = 0;
 
-            // 방이 있을때
-            if(room > 0) {
-                this.setState({ isRoomList: true });
-            } else {
-                this.setState({ isUserList: true });
+            for(let i in room){
+                cnt = cnt + room[i];
+                roomcnt++;
+
+                if(roomcnt === size(room)) {
+                    // 방이 있을때
+                    if(cnt > 0) {
+                        this.setState({ isRoomList: true });
+                    } else {
+                        this.setState({ isUserList: true });
+                    }
+                }
             }
         }
     }

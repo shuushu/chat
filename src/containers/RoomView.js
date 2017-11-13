@@ -27,9 +27,13 @@ const populate = { child: 'null', root: 'chat' }
 
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: mapValues(dataToJS(firebase, 'chat/room/' + uid + '/' + props.rpath.match.params.key), (value, key) => {
+            room: mapValues(dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key), (value, key) => {
                 if(key === 'message') {
                      let msg = dataToJS(firebase, 'chat/message/' + value);
+
+                     if(!msg) {
+                         return false;
+                     }
 
                      msg.map((obj) => {
                          let UID = obj.writer;
@@ -177,6 +181,12 @@ class App extends Component {
                 latestMsg: '',
                 size: that.state.size + 1
             });
+
+            if(that.props.room.roomState === 0) {
+                that.props.room.join.forEach((key) => {
+                    that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
+                });
+            }
         });
     };
 

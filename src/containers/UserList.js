@@ -37,11 +37,12 @@ class UserList extends Component {
     handleChange = (e) => {
         let cnt = 0;
         let idx = e.target.dataset.idx;
+
         this.setState({
             handleChanged: update(
                 this.state.handleChanged, {
                     [idx]: {
-                        $set: e.target.checked
+                        $set: (e.target.checked) ? e.target.id : false
                     }
                 }
             )
@@ -58,13 +59,12 @@ class UserList extends Component {
 
     createRoom = () => {
         let handleChanged = this.state.handleChanged;
-        let user = this.props.member.users;
         let joins = [];
 
         for(let i=0;i<handleChanged.length;i++) {
             // 체크된 유저만 joinArr 담는다
             if(handleChanged[i]) {
-                joins.push(user[i].key);
+                joins.push(handleChanged[i]);
             }
         }
 
@@ -75,17 +75,14 @@ class UserList extends Component {
         // 룸정보 저장 PK = 실시간타임
         const KEY = convertDate('yymmddhhmmss');
 
-        joins.map((uid, idx) => {
-            updates['/chat/room/' + uid + '/' + KEY] = {
-                message: KEY,
-                join: joins,
-                msgCnt: 0,
-                roomState: 0
-            };
+        updates['/chat/room/' + KEY] = {
+            message: KEY,
+            join: joins,
+            msgCnt: 0,
+            roomState: 0
+        };
 
-            this.props.firebase.ref().update(updates);
-        });
-
+        this.props.firebase.ref().update(updates);
         window.location.href= '/roomView/' + KEY;
     };
 
@@ -108,7 +105,7 @@ class UserList extends Component {
 
 
                 return (
-                    <li className="item" key={`users${i}`}>
+                    <li className="item"  key={`users${i}`}>
                         <input type="checkbox" data-idx={i} onChange={this.handleChange} id={key} />
                         <label htmlFor={key}>
                             <img src={avatarUrl} className="thumb" alt={`${displayName} 썸네일`}/>
