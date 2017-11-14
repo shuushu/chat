@@ -8,6 +8,7 @@ import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 const populate = { child: 'null', root: 'chat' }
+let doch;
 
 @firebaseConnect(
     () => {
@@ -19,26 +20,31 @@ const populate = { child: 'null', root: 'chat' }
 
 @connect(
     ({ firebase }, props) => {
+        let uid, user = props.firebase.auth().currentUser;
+
+        if (user !== null) {
+            uid = user.uid;
+        }
+
         return ({
             auth: pathToJS(firebase, 'auth'),
             room: mapValues(dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key), (value, key) => {
                 if(key === 'message') {
-                     let msg = dataToJS(firebase, 'chat/message/' + value, false);
+                    let msg = dataToJS(firebase, 'chat/message/' + value, false);
 
-                     if(!msg) {
-                         return false;
-                     }
+                    if(!msg) { return false; }
 
-                     msg.map((obj) => {
-                         let UID = obj.writer;
+                    msg.map((obj) => {
+                        if(!obj) { return; }
 
-                         obj.writer = mapValues(dataToJS(firebase, 'chat/users/' + obj.writer), (value, key) => {
-                             if(key === 'providerData') {
-                                 value = UID;
-                             }
-                             return value;
-                         });
-                     });
+                        let UID = obj.writer;
+                        obj.writer = mapValues(dataToJS(firebase, 'chat/users/' + obj.writer), (value, key) => {
+                            if(key === 'providerData') {
+                                value = UID;
+                            }
+                            return value;
+                        });
+                    });
 
                     value = msg;
                 }
@@ -59,67 +65,24 @@ class App extends Component {
             roomViewData: null,
             latestMsg: '',
             hasNewMessage: false,
-            page: 10,
+            page: 20,
             componentDidMount: true,
             user: []
         };
+        this.prevScrollTop = 0;
+        this.nowScrollDirection = '';
+        this.isOnAddMessage = false;
+
 
         this.savedNewDate = '';
-        this.screenHeight = 0;
-        this.clientHeight = 0;
+        this.onload = false;
 
         this.onScroll = this.onScroll.bind(this);
     }
 
-
     componentDidMount() {
-        this.clientHeight = document.body.clientHeight;
-        this.screenHeight = window.screen.height;
-
         window.addEventListener('scroll', this.onScroll, true);
-
-        setTimeout(() => {
-            window.scrollTo(0, document.body.scrollHeight);
-        }, 3000);
-
-        let timer;
-        /*let repeat = () => {
-            if(timer){
-                clearTimeout(timer);
-            }
-            // firebase에 연결될때까지 요청
-            if(this.props.message) {
-                // 요청되면 타이머 종료
-                clearTimeout(timer);
-
-                let that = this;
-                let msgSize = (this.props.message[that.props.rpath.match.params.user]) ? this.props.message[that.props.rpath.match.params.user].length-1 : 0;
-
-                this.props.firebase.ref('/message/' + this.props.rpath.match.params.user).limitToLast(1).on("child_added", function(snapshot) {
-                    // 컴포넌트 렌더링 이후 메세지 수신이 있으면 실행
-                    if(msgSize !== Number(snapshot.key)) {
-                        if(snapshot.val().uid !== that.props.auth.uid) {
-                            const scrollTop = window.scrollY;
-                            const clientHeight = document.body.clientHeight;
-                            const screenHeight = window.screen.height;
-                            // 읽음 표시상태 로직
-                            //if(scrollTop >= clientHeight - screenHeight -200) {
-                                let ROOM_KEY = that.props.rpath.match.params.user;
-
-                                that.props.firebase.ref(`/message/${ROOM_KEY}/${snapshot.key}`).update({
-                                        state: snapshot.val().state - 1
-                                }, function(){});
-                            //}
-                            that.setState({ hasNewMessage: true })
-                        }
-                    }
-                });
-            } else {
-                timer = setTimeout(repeat, 1000);
-            }
-        };
-
-        repeat();*/
+        this.onload = true;
     }
 
     componentWillReceiveProps ({ auth }) {
@@ -129,22 +92,56 @@ class App extends Component {
             })
         }
     }
+
     // 마운트해제
     componentWillUnmount() {
         window.removeEventListener('scroll', this.onScroll, true);
     }
-    
 
-    onScroll() {
-        const scrollTop = window.scrollY;
-
-        if ( scrollTop === 0) {
-            // 이전 데이터 보여줌
-            this.handleLoad();
+    shouldComponentUpdate(nextProps, nextState){
+        // 룸 첫번째 렌더
+        if(this.props.room.message && this.onload) {
+            window.scrollTo(0, document.body.scrollHeight);
+            this.onload = false;
         }
 
-        if ( scrollTop >= this.clientHeight - this.screenHeight ){
-            //console.clear();
+        if(this.props.room.message) {
+            /*if(this.state.latestMsg === nextState.latestMsg) {
+                return false;
+            }*/
+        }
+        return true;
+    }
+
+    onScroll() {
+        const scrollTop = typeof window.pageYOffset !== 'undefined' ? window.pageYOffset: document.documentElement.scrollTop? document.documentElement.scrollTop: document.body.scrollTop? document.body.scrollTop:0;;
+        const clientHeight = document.body.clientHeight;
+        const screenHeight = "innerHeight" in window ? window.innerHeight : document.documentElement.offsetHeight;
+
+        // 스크롤 방향 저장
+        if (scrollTop > this.prevScrollTop) {
+            this.nowScrollDirection = 'down';
+        } else if (scrollTop < this.prevScrollTop) {
+            this.nowScrollDirection = 'up';
+        }
+
+        this.prevScrollTop = scrollTop;
+
+        // 스크롤 상단
+        if ( scrollTop < 50 && this.nowScrollDirection === 'up' ){
+            if (!this.isOnAddMessage) {
+                let max = this.props.room.message.length;
+                let current = (this.state.page + 10 >= max) ? max : this.state.page + 10;
+                this.setState({ page: current });
+                this.isOnAddMessage = true;
+            }
+        }
+
+        // 스크롤 최하단
+        if ( clientHeight <= (scrollTop + screenHeight) ){
+
+        } else {
+
         }
     }
 
@@ -164,7 +161,7 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
         const context = {
             writer: this.props.auth.uid,
-            state: 0,
+            state: size(this.props.room.join)-1,
             type: 0,
             text: this.state.latestMsg,
             date: currentTime
@@ -176,7 +173,6 @@ class App extends Component {
         data[size(this.props.room.message)] = context;
 
         this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).update(data, () => {
-            //window.scrollTo(0, document.body.scrollHeight);
             that.setState({
                 latestMsg: '',
                 size: that.state.size + 1
@@ -188,15 +184,9 @@ class App extends Component {
                 });
             };
 
-            that.setState({ hasNewMessage: true })
+            that.setState({ hasNewMessage: true });
+            this.isOnAddMessage = false;
         });
-    };
-
-    handleLoad = (e) => {
-        let max = this.props.room.message.length;
-        let current = (this.state.page + 10 >= max) ? max : this.state.page + 10;
-console.log(current);
-        this.setState({ page: current });
     };
 
     render() {
@@ -224,6 +214,17 @@ console.log(current);
         };
 
         let mapToList2 = (message) => {
+            let { providerData } = last(message).writer;
+
+            if(providerData !== this.props.auth.uid) {
+                if(window.scrollY >= document.body.clientHeight - window.screen.height) {
+                    if(last(this.props.room.message).state > 0) {
+                        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}/${message.length-1}`).update({state: last(this.props.room.message).state -1})
+                    }
+                }
+            }
+
+
             message = slice(message, message.length-this.state.page, message.length);
 
             return message.map((key, i) => {
@@ -237,6 +238,7 @@ console.log(current);
                         <div className="profile">
                             <div>
                                 <em>{ displayName }</em> /
+                                [{key.state}] /
                                 <time dateTime={key.date}>{latestTime(key.date)}</time>
                             </div>
                             <p className="message">{key.text}</p>
@@ -313,22 +315,23 @@ console.log(current);
         // 새메세지가 왔을때
         let newMsgRender = () => {
             let scrollTop = window.scrollY;
-            this.clientHeight = document.body.clientHeight;
+            let screenHeight = window.screen.height;
+            let clientHeight = document.body.clientHeight;
 
             let { providerData } = last(this.props.room.message).writer;
 
             if(providerData === this.props.auth.uid) {
-                window.scrollTo(0, this.clientHeight);
+                window.scrollTo(0, clientHeight);
                 return false;
             }
 
 
             // 화면이 하단에 있을때
-            if ( scrollTop >= this.clientHeight - this.screenHeight - 200 ){
+            if ( scrollTop >= clientHeight - screenHeight - 200 ){
                 setTimeout(() => {
                     this.setState({ hasNewMessage: false });
                 }, 500);
-                window.scrollTo(0, this.clientHeight);
+                window.scrollTo(0, clientHeight);
             } else {
                 // 화면이 상단에 있음
                 setTimeout(() => {
