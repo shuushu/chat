@@ -64,14 +64,15 @@ class App extends Component {
             isEmpty: false,
             roomViewData: null,
             latestMsg: '',
-            hasNewMessage: false,
             page: 20,
             componentDidMount: true,
-            user: []
+            user: [],
+            newMessgae: false
         };
         this.prevScrollTop = 0;
         this.nowScrollDirection = '';
         this.isOnAddMessage = false;
+        this.newMessgae = false; // 새로운 메세지 확인 FLAG
 
 
         this.savedNewDate = '';
@@ -93,11 +94,6 @@ class App extends Component {
         }
     }
 
-    // 마운트해제
-    componentWillUnmount() {
-        window.removeEventListener('scroll', this.onScroll, true);
-    }
-
     shouldComponentUpdate(nextProps, nextState){
         // 룸 첫번째 렌더
         if(this.props.room.message && this.onload) {
@@ -106,11 +102,30 @@ class App extends Component {
         }
 
         if(this.props.room.message) {
-            /*if(this.state.latestMsg === nextState.latestMsg) {
-                return false;
+            //console.log(last(this.props.room.message), last(nextProps.room.message.length))
+            /*
+            if(this.props.room.message.length !== nextProps.room.message.length) {
+                let uid = last(nextProps.room.message).writer.providerData;
+
+                if(this.props.auth.uid !== uid) {
+                    if(window.scrollY <= document.body.clientHeight - window.screen.height) {
+                        this.setState({newMessgae: true});
+                    }
+                } else {
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
             }*/
         }
         return true;
+    }
+
+    componentDidUpdate() {
+
+    }
+
+    // 마운트해제
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.onScroll, true);
     }
 
     onScroll() {
@@ -182,9 +197,8 @@ class App extends Component {
                 that.props.room.join.forEach((key) => {
                     that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
                 });
-            };
+            }
 
-            that.setState({ hasNewMessage: true });
             this.isOnAddMessage = false;
         });
     };
@@ -215,37 +229,69 @@ class App extends Component {
 
         let mapToList2 = (message) => {
             let { providerData } = last(message).writer;
+            let isScrollTop = false;
 
-            if(providerData !== this.props.auth.uid) {
-                if(window.scrollY >= document.body.clientHeight - window.screen.height) {
+            if(window.scrollY >= document.body.clientHeight - window.screen.height) {
+                if(providerData !== this.props.auth.uid) {
                     if(last(this.props.room.message).state > 0) {
-                        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}/${message.length-1}`).update({state: last(this.props.room.message).state -1})
+                        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}/${message.length-1}`).update({state: last(this.props.room.message).state -1});
                     }
                 }
+                isScrollTop = false;
+            } else {
+                isScrollTop = true;
             }
-
 
             message = slice(message, message.length-this.state.page, message.length);
 
-            return message.map((key, i) => {
-                let { avatarUrl, displayName } = key.writer;
+            let mapping = (message) => {
+                return message.map((key, i) => {
+                    let { avatarUrl, displayName } = key.writer;
 
-                return (
-                    <div key={`itemMSG${i}`} className={key.writer.providerData === this.props.auth.uid ? 'mine' : 'list'}>
-                        <div className="imgs">
-                            {<img src={ avatarUrl ? avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
-                        </div>
-                        <div className="profile">
-                            <div>
-                                <em>{ displayName }</em> /
-                                [{key.state}] /
-                                <time dateTime={key.date}>{latestTime(key.date)}</time>
+                    return (
+                        <div key={`itemMSG${i}`} className={key.writer.providerData === this.props.auth.uid ? 'mine' : 'list'}>
+                            <div className="imgs">
+                                {<img src={ avatarUrl ? avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
                             </div>
-                            <p className="message">{key.text}</p>
+                            <div className="profile">
+                                <div>
+                                    <em>{ displayName }</em> /
+                                    [{key.state}] /
+                                    <time dateTime={key.date}>{latestTime(key.date)}</time>
+                                </div>
+                                <p className="message">{key.text}</p>
+                            </div>
                         </div>
-                    </div>
-                );
-            });
+                    );
+                });
+            };
+
+            return (
+                <div id="messages">
+                    {mapping(message)}
+                    {/*{console.log('isScrollTop ?', isScrollTop)}*/}
+                    <ReactCSSTransitionGroup
+                        component="div"
+                        className="animated"
+                        transitionName={{
+                            enter: 'fadeIn',
+                            leave: 'fadeOutDown'
+                        }}
+                        transitionEnterTimeout={3000}
+                        transitionLeaveTimeout={1000}>
+                        { last(message).state === 1 && (
+                            <button className="animated message__unread fadeIn waves-effect waves-light btn">
+                                N : {message.text}
+                                <i className="material-icons right">new_releases</i>
+                            </button>
+                        )}
+                    </ReactCSSTransitionGroup >
+                </div>
+            )
+
+
+
+
 
 
 
@@ -313,29 +359,30 @@ class App extends Component {
         };
 
         // 새메세지가 왔을때
-        let newMsgRender = () => {
+        let newMsgRender = (message) => {
             let scrollTop = window.scrollY;
             let screenHeight = window.screen.height;
             let clientHeight = document.body.clientHeight;
 
-            let { providerData } = last(this.props.room.message).writer;
+            let { providerData } = message.writer;
 
             if(providerData === this.props.auth.uid) {
                 window.scrollTo(0, clientHeight);
                 return false;
             }
 
+            console.log(scrollTop >= clientHeight - screenHeight - 200)
 
             // 화면이 하단에 있을때
             if ( scrollTop >= clientHeight - screenHeight - 200 ){
                 setTimeout(() => {
-                    this.setState({ hasNewMessage: false });
+
                 }, 500);
                 window.scrollTo(0, clientHeight);
             } else {
                 // 화면이 상단에 있음
                 setTimeout(() => {
-                    this.setState({ hasNewMessage: false });
+
                 }, 2000);
 
                 return (
@@ -355,21 +402,9 @@ class App extends Component {
                       { this.state.roomViewData !== null && getMember() }
                   </div>
                   <hr/>
-                  <div id="messages">
+                  <div>
                       { Array.isArray(this.props.room.message) && mapToList2(this.props.room.message)}
                   </div>
-
-                  <ReactCSSTransitionGroup
-                      component="div"
-                      className="animated"
-                      transitionName={{
-                          enter: 'fadeIn',
-                          leave: 'fadeOutDown'
-                      }}
-                      transitionEnterTimeout={3000}
-                      transitionLeaveTimeout={1000}>
-                      {this.state.hasNewMessage && newMsgRender()}
-                  </ReactCSSTransitionGroup >
 
                   <div className="msgSendForm">
                       <form action="" onSubmit={this.handleSubmit}>
