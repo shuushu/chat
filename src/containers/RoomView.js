@@ -1,4 +1,4 @@
-import { mapValues, size, slice, lastIndexOf, last } from 'lodash';
+import { mapValues, size, slice, lastIndexOf, last, reduce } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -7,13 +7,16 @@ import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-re
 import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
-const populate = { child: 'null', root: 'chat' }
-let doch;
+const populate = { child: 'users', root: 'chat' };
+let page = 2;
 
 @firebaseConnect(
-    () => {
+    ({rpath}) => {
         return ([
-            { path: 'chat' , populates: [populate], queryParams: ['limitToFirst=5']} // places "goals" and "users" in redux , populates: [populate]
+            { path: 'chat/users', populates: [populate]},
+            { path: 'chat/room/'  + rpath.match.params.key},
+            { path: 'chat/room/'  + rpath.match.params.key +'/join', populates: [populate]},
+            { path: 'chat/message/' + rpath.match.params.key, storeAs: 'message', queryParams: ['limitToLast=' + page] },
         ])
     }
 )
@@ -28,27 +31,14 @@ let doch;
 
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: mapValues(dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key), (value, key) => {
-                if(key === 'message') {
-                    let msg = dataToJS(firebase, 'chat/message/' + value, false);
+            room: dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key),
+            message: dataToJS(firebase, 'message'),
+            member: reduce(dataToJS(firebase, 'chat/room/'  + props.rpath.match.params.key +'/join'), (v1,v2) => {
+                let obj = {};
+                obj[v1] = dataToJS(firebase, 'chat/users/' + v1);
+                obj[v2] =dataToJS(firebase, 'chat/users/' + v2);
 
-                    if(!msg) { return false; }
-
-                    msg.map((obj) => {
-                        if(!obj) { return; }
-
-                        let UID = obj.writer;
-                        obj.writer = mapValues(dataToJS(firebase, 'chat/users/' + obj.writer), (value, key) => {
-                            if(key === 'providerData') {
-                                value = UID;
-                            }
-                            return value;
-                        });
-                    });
-
-                    value = msg;
-                }
-                return value;
+                return obj;
             }),
         })
     }
@@ -66,7 +56,7 @@ class App extends Component {
             latestMsg: '',
             page: 20,
             componentDidMount: true,
-            user: [],
+            msg: '',
             newMessgae: false
         };
         this.prevScrollTop = 0;
@@ -76,45 +66,54 @@ class App extends Component {
 
 
         this.savedNewDate = '';
-        this.onload = false;
+        this.onload = false;  // 룸 첫번째 렌더
 
         this.onScroll = this.onScroll.bind(this);
+        this.addMessage = this.addMessage.bind(this);
     }
 
     componentDidMount() {
         window.addEventListener('scroll', this.onScroll, true);
+
         this.onload = true;
     }
 
-    componentWillReceiveProps ({ auth }) {
-        if (auth === null) {
-            this.setState({
-                redirect: true
-            })
-        }
-    }
-
     shouldComponentUpdate(nextProps, nextState){
+        if(this.props.message === nextProps.message && this.state.latestMsg === nextState.latestMsg){
+            return false;
+        }
+        // props > state로 메세지 지정
+        if(this.props.message && this.onload){
+            this.setState({
+                msg: this.props.message
+            });
+
+            this.onload = false;
+        }
+        // 로그인 여부
+        if (!this.props.auth) {
+            this.setState({ redirect: true });
+        }
+
         // 룸 첫번째 렌더
-        if(this.props.room.message && this.onload) {
+        if(this.props.message && this.onload) {
             window.scrollTo(0, document.body.scrollHeight);
             this.onload = false;
         }
 
-        if(this.props.room.message) {
-            //console.log(last(this.props.room.message), last(nextProps.room.message.length))
-            /*
-            if(this.props.room.message.length !== nextProps.room.message.length) {
-                let uid = last(nextProps.room.message).writer.providerData;
+        if(this.props.message) {
+            if(this.props.message.length !== nextProps.message.length) {
+                let uid = last(nextProps.message).writer.providerData;
 
                 if(this.props.auth.uid !== uid) {
                     if(window.scrollY <= document.body.clientHeight - window.screen.height) {
-                        this.setState({newMessgae: true});
+                        this.newMessgae = true;
                     }
                 } else {
                     window.scrollTo(0, document.body.scrollHeight);
                 }
-            }*/
+                this.setState({newMessgae: true});
+            }
         }
         return true;
     }
@@ -160,6 +159,20 @@ class App extends Component {
         }
     }
 
+    addMessage = (e) => {
+        e.preventDefault();
+
+        page++;
+        let data = this.props.firebase.ref('chat/message/' + this.props.rpath.match.params.key).orderByChild('date').limitToLast(page);
+
+        data.on('value', (snap) => {
+            this.setState({
+                msg: snap.val()
+            });
+        });
+
+    };
+
     // input TEXT
     handleChange = (e) => {
         this.setState({ latestMsg: e.target.value })
@@ -176,7 +189,8 @@ class App extends Component {
         const currentTime = convertDate("yyyy-MM-dd HH:mm:ss");
         const context = {
             writer: this.props.auth.uid,
-            state: size(this.props.room.join)-1,
+            //state: size(this.props.room.join)-1,
+            state: 0,
             type: 0,
             text: this.state.latestMsg,
             date: currentTime
@@ -185,9 +199,23 @@ class App extends Component {
         let data = {};
         let that = this;
 
-        data[size(this.props.room.message)] = context;
 
-        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).update(data, () => {
+        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).push(context, () => {
+            that.setState({
+                latestMsg: '',
+                size: that.state.size + 1
+            });
+
+            /*if(that.props.room.roomState === 0) {
+                that.props.room.join.forEach((key) => {
+                    that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
+                });
+            }*/
+
+            this.isOnAddMessage = false;
+        });
+
+        /*this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).update(data, () => {
             that.setState({
                 latestMsg: '',
                 size: that.state.size + 1
@@ -200,7 +228,7 @@ class App extends Component {
             }
 
             this.isOnAddMessage = false;
-        });
+        });*/
     };
 
     render() {
@@ -218,18 +246,9 @@ class App extends Component {
             )
         }
 
-        // Redux Props에서 state로 전달이 되면 실행
-        let getMember = () => {
-            let { join } = this.state.roomViewData;
-
-            return join.map((email, idx) => {
-                return (<span key={`room${idx}`} > ○ {email}</span>);
-            });
-        };
 
         let mapToList2 = (message) => {
             let { providerData } = last(message).writer;
-            let isScrollTop = false;
 
             if(window.scrollY >= document.body.clientHeight - window.screen.height) {
                 if(providerData !== this.props.auth.uid) {
@@ -237,11 +256,7 @@ class App extends Component {
                         this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}/${message.length-1}`).update({state: last(this.props.room.message).state -1});
                     }
                 }
-                isScrollTop = false;
-            } else {
-                isScrollTop = true;
             }
-
             message = slice(message, message.length-this.state.page, message.length);
 
             let mapping = (message) => {
@@ -266,10 +281,26 @@ class App extends Component {
                 });
             };
 
+            let newMessage = (type, isMSG) => {
+                let that = this;
+                setTimeout(()=>{
+                    that.newMessgae = false;
+                    that.setState({newMessgae: false});
+                }, 300);
+
+                if(type === 1 && isMSG) {
+                    return (
+                        <button className="animated message__unread fadeIn waves-effect waves-light btn">
+                            N : {last(message).text}
+                            <i className="material-icons right">new_releases</i>
+                        </button>
+                    )
+                }
+            };
+
             return (
                 <div id="messages">
                     {mapping(message)}
-                    {/*{console.log('isScrollTop ?', isScrollTop)}*/}
                     <ReactCSSTransitionGroup
                         component="div"
                         className="animated"
@@ -279,119 +310,10 @@ class App extends Component {
                         }}
                         transitionEnterTimeout={3000}
                         transitionLeaveTimeout={1000}>
-                        { last(message).state === 1 && (
-                            <button className="animated message__unread fadeIn waves-effect waves-light btn">
-                                N : {message.text}
-                                <i className="material-icons right">new_releases</i>
-                            </button>
-                        )}
+                        { newMessage(last(message).state, this.newMessgae) }
                     </ReactCSSTransitionGroup >
                 </div>
             )
-
-
-
-
-
-
-
-/*
-            let key = this.props.rpath.match.params.user;
-            let currentHeight = document.body.scrollHeight;
-            let isNewDate = '';
-
-            if(message[key]) {
-                let msgData = message[key];
-
-                return msgData.map((data,i) => {
-
-                    if(i < msgData.length - this.state.size) {
-                        return false;
-                    }
-                    // 마지막메세지
-                    if(i >= msgData.length-1) {
-                        if(this.state.componentDidMount) {
-                            window.scrollTo(0, currentHeight);
-
-                            setTimeout(() => {
-                                this.setState({ componentDidMount: false })
-                            }, 1000);
-                        }
-                    }
-
-                    // convert TIME
-                    let getDate = convertTime(data.time);
-
-                    if (this.savedNewDate === getDate) {
-                        isNewDate = false;
-                    } else {
-                        isNewDate = true;
-                        this.savedNewDate = getDate;
-                    }
-
-                    return (
-                        <div key={`itemMSG${i}`} >
-                            {isNewDate && (
-                                <div className="division">
-                                    <span className="text">{getDate}</span>
-                                </div>
-                            )}
-                            <div className={data.uid === this.props.auth.uid ? 'mine' : 'list'}>
-
-                                <div className="imgs">
-                                    {<img src={ this.props.users ? this.props.users[data.uid].avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
-                                </div>
-                                <div className="profile">
-                                    <div>
-                                        <em>{ this.props.users && this.props.users[data.uid].displayName }</em> /
-                                        <time dateTime={data.time}>{latestTime(data.time)}</time>
-                                        {data.state > 0 && (
-                                            <span className="state">{data.state}</span>
-                                        )}
-                                    </div>
-                                    <p className="message">{data.sendMsg}</p>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                });
-            }*/
-        };
-
-        // 새메세지가 왔을때
-        let newMsgRender = (message) => {
-            let scrollTop = window.scrollY;
-            let screenHeight = window.screen.height;
-            let clientHeight = document.body.clientHeight;
-
-            let { providerData } = message.writer;
-
-            if(providerData === this.props.auth.uid) {
-                window.scrollTo(0, clientHeight);
-                return false;
-            }
-
-            console.log(scrollTop >= clientHeight - screenHeight - 200)
-
-            // 화면이 하단에 있을때
-            if ( scrollTop >= clientHeight - screenHeight - 200 ){
-                setTimeout(() => {
-
-                }, 500);
-                window.scrollTo(0, clientHeight);
-            } else {
-                // 화면이 상단에 있음
-                setTimeout(() => {
-
-                }, 2000);
-
-                return (
-                    <button className="animated message__unread fadeIn waves-effect waves-light btn">
-                        새 메시지가 있습니다.
-                        <i className="material-icons right">new_releases</i>
-                    </button>
-                );
-            }
         };
 
         return (
@@ -399,11 +321,11 @@ class App extends Component {
                   <div>
                       <Link to={`/RoomList`}>뒤로</Link>
                       참여인원:
-                      { this.state.roomViewData !== null && getMember() }
+                      <button onClick={this.addMessage}>add message</button>
                   </div>
                   <hr/>
                   <div>
-                      { Array.isArray(this.props.room.message) && mapToList2(this.props.room.message)}
+                      {/*{ Array.isArray(this.props.room.message) && mapToList2(this.props.room.message)}*/}
                   </div>
 
                   <div className="msgSendForm">

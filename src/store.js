@@ -15,7 +15,7 @@ const fbConfig = {
 firebase.initializeApp(fbConfig);
 
 const config = {
-  userProfile: 'chat/users', // firebase.createUser 저장위치
+  userProfile: 'users', // firebase.createUser 저장위치
   enableLogging: false, // enable/disable Firebase's database logging
 };
 
