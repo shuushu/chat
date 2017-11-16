@@ -1,4 +1,4 @@
-import { mapValues, size, slice, lastIndexOf, last, reduce, sortBy } from 'lodash';
+import { size, last, reduce, sortBy, map } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -8,7 +8,22 @@ import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
 const populate = { child: 'users', root: 'chat' };
-let page = 122;
+let page = 10;
+let tempMsg = [];
+
+let selectMessage = (propsMessage) =>{
+    if(propsMessage.length - tempMsg.length && propsMessage.length) {
+        return propsMessage
+    }
+
+    // 메세지가 추가 될때
+    if(tempMsg.length > 0 && last(propsMessage).seq !== last(tempMsg).seq) {
+        tempMsg.push(last(propsMessage));
+    }
+
+console.log(tempMsg.length)
+    return tempMsg;
+};
 
 @firebaseConnect(
     ({rpath}) => {
@@ -26,9 +41,9 @@ let page = 122;
         return ({
             auth: pathToJS(firebase, 'auth'),
             room: dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key),
-            message: sortBy(dataToJS(firebase, 'message'), [(o) => {
+            message: selectMessage(sortBy(dataToJS(firebase, 'message'),[(o) => {
                 return o.seq
-            }]),
+            }])),
             member: reduce(dataToJS(firebase, 'chat/room/'  + props.rpath.match.params.key +'/join'), (v1,v2) => {
                 let obj = {};
                 obj[v1] = dataToJS(firebase, 'chat/users/' + v1);
@@ -39,6 +54,8 @@ let page = 122;
         })
     }
 )
+
+
 
 
 class App extends Component {
@@ -58,12 +75,6 @@ class App extends Component {
         this.prevScrollTop = 0;
         this.nowScrollDirection = '';
         this.isOnAddMessage = false;
-        this.newMessgae = false; // 새로운 메세지 확인 FLAG
-
-
-        this.savedNewDate = '';
-        this.isMapping = false; // 첫 메세지 맵핑
-        this.onload = false;  // 룸 첫번째 렌더
 
         this.onScroll = this.onScroll.bind(this);
         this.addMessage = this.addMessage.bind(this);
@@ -71,40 +82,65 @@ class App extends Component {
 
     componentDidMount() {
         window.addEventListener('scroll', this.onScroll, true);
-
-        this.isMapping = true;
     }
 
     componentWillReceiveProps({ message, auth }){
-        // props > state로 메세지 지정
-        if(message.length > 0 && this.isMapping){
-            this.setState({
-                msg: message
-            });
-            this.isMapping = false;
-        }
+        // 첫맵핑 prop > state
+        //console.log(message.length, this.state.msg.length)
+        /*if(message.length - this.state.msg.length === message.length && message.length > 0) {
+            this.setState({ msg: message });
+        }*/
 
         // 로그인 여부
         if (!auth) {
             this.setState({ redirect: true });
         }
+
+        // props > state로 메세지 지정
+        if(message.length > 0){
+            let newmsg = last(message);
+
+            if(newmsg.writer !== auth.uid && window.scrollY <= document.body.clientHeight - window.screen.height) {
+                this.setState({ newMessgae: true });
+            }
+
+            this.setState({ msg: message });
+        }
     }
 
     shouldComponentUpdate(nextProps, nextState){
+        /*if(nextProps.message.length - this.props.message.length === nextProps.message.length && nextProps.message.length > 0) {
+            console.log(this.props.message.length, nextProps.message.length)
+            this.setState({ msg: nextProps.message });
+        }*/
+
         /*if(this.props.message === nextProps.message && this.state.latestMsg === nextState.latestMsg){
             return false;
+        }*/
+        /*if(this.props.message.length > 0 && nextProps.message.length) { // 예외처리
+            console.log(last(this.props.message).seq, last(nextProps.message).seq)
+            if(last(this.props.message).seq !== last(nextProps.message).seq) {
+                console.log(nextProps.message);
+                this.setState({
+                    msg: nextProps.message
+                })
+            }
         }*/
 
 
 
+        //console.log(last(this.props.message).seq, last(this.state.msg).seq)
+
+
+        //this.addMessage();
         // 룸 첫번째 렌더-셋타임아웃 다른 방법은?
-        if(nextState.msg.length - this.state.msg.length === nextState.msg.length && nextState.msg.length > 0) {
+        /*if(nextState.msg.length - this.state.msg.length === nextState.msg.length && nextState.msg.length > 0) {
             setTimeout(()=>{
                 window.scrollTo(0, document.body.scrollHeight);
-            }, 1000);
+            }, 300);
 
             this.onload = false;
-        }
+        }*/
 
 
         /*if(this.state.msg) {
@@ -124,11 +160,43 @@ class App extends Component {
         }*/
         return true;
     }
+    componentWillUpdate(props, state) {
+        // 첫렌더링 맵핑
+        if(props.message.length - this.props.message.length === props.message.length && props.message.length > 0) {
+            this.setState({ msg: props.message }, () => {
+                tempMsg = props.message;
+            });
+        }
+    }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
+        // 첫렌더링 && 새로고침 - 스크롤 이동
+        if(this.state.msg.length-prevState.msg.length === this.state.msg.length) {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        if(this.props.message.length > 0 && prevProps.message.length > 0) { // 예외처리
+            let newmsg = last(this.props.message);
+            let oldmsg = last(prevProps.message);
+
+            // 새로운 메세지 수신
+            if(newmsg.seq !== oldmsg.seq) {
+                if(newmsg.writer === this.props.auth.uid) {
+                    window.scrollTo(0, document.body.scrollHeight);
+                } else {
+                    // 상대방
+                    if(window.scrollY <= document.body.clientHeight - window.screen.height) {
+                        this.setState({ newMessgae: false })
+                    } else {
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }
+                }
+            }
+        }
+
         // 메세지 송수신
-        if(size(this.props.message) - size(prevProps.message) === 1) {
-            if(last(prevProps.message).writer === this.props.auth.uid) {
+        /*if(this.state.msg.length - state.msg.length === 1) {
+            if(last(this.state.msg).writer === this.props.auth.uid) {
                 window.scrollTo(0, document.body.scrollHeight);
             } else {
                 if(window.scrollY <= document.body.clientHeight - window.screen.height) {
@@ -137,7 +205,7 @@ class App extends Component {
                     window.scrollTo(0, document.body.scrollHeight);
                 }
             }
-        }
+        }*/
     }
 
     // 마운트해제
@@ -180,7 +248,8 @@ class App extends Component {
     addMessage = (e) => {
         if(e) e.preventDefault();
 
-        page++;
+        page = this.state.msg.length + 1;
+
         let data = this.props.firebase.ref('chat/message/' + this.props.rpath.match.params.key).limitToLast(page);
 
         data.on('value', (snap) => {
@@ -188,6 +257,8 @@ class App extends Component {
                 msg: sortBy(snap.val(), [(o) => {
                     return o.seq
                 }])
+            }, () => {
+                tempMsg = this.state.msg;
             });
         });
     };
@@ -215,22 +286,18 @@ class App extends Component {
             date: currentTime
         };
 
-        let data = {};
         let that = this;
-
 
         this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}`).push(context, () => {
             that.setState({
-                latestMsg: '',
-                size: that.state.size + 1
+                latestMsg: ''
             });
-            this.addMessage();
 
-            /*if(that.props.room.roomState === 0) {
-                that.props.room.join.forEach((key) => {
-                    that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
-                });
-            }*/
+            if(that.props.room.roomState === 0) {
+                that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
+            }
+
+            tempMsg = this.state.msg;
 
             this.isOnAddMessage = false;
         });
@@ -269,15 +336,6 @@ class App extends Component {
 
 
         let mapToList2 = (message) => {
-/*            let { lastuser } = this.props.member[last(message).writer];
-
-            if(window.scrollY >= document.body.clientHeight - window.screen.height) {
-                if(lastuser !== this.props.auth.uid) {
-                    if(last(this.props.room.message).state > 0) {
-                        this.props.firebase.ref(`chat/message/${this.props.rpath.match.params.key}/${message.length-1}`).update({state: last(this.props.room.message).state -1});
-                    }
-                }
-            }*/
 
             let mapping = (data) => {
                 return Object.keys(data).map((key, i) => {
@@ -285,7 +343,7 @@ class App extends Component {
                     let user = this.props.member[writer];
 
                     return (
-                        <div key={`itemMSG${i}`} className={user === this.props.auth.uid ? 'mine' : 'list'}>
+                        <div key={`itemMSG${i}`} className={writer === this.props.auth.uid ? 'mine' : 'list'}>
                             <div className="imgs">
                                 {<img src={ user.avatarUrl ? user.avatarUrl : 'http://placehold.it/40x40' } alt=""/>}
                             </div>
@@ -302,14 +360,8 @@ class App extends Component {
                 });
             };
 
-            let newMessage = (type, isMSG) => {
-                let that = this;
-                setTimeout(()=>{
-                    that.newMessgae = false;
-                    that.setState({newMessgae: false});
-                }, 300);
-
-                if(type === 1 && isMSG) {
+            let newMessage = (type, isNewMsg) => {
+                if(type === 1 && isNewMsg) {
                     return (
                         <button className="animated message__unread fadeIn waves-effect waves-light btn">
                             N : {last(message).text}
@@ -331,7 +383,7 @@ class App extends Component {
                         }}
                         transitionEnterTimeout={3000}
                         transitionLeaveTimeout={1000}>
-                        {/*{ newMessage(last(message).state, this.newMessgae) }*/}
+                        { newMessage(last(message).state, this.state.newMessgae) }
                     </ReactCSSTransitionGroup >
                 </div>
             )
@@ -346,7 +398,7 @@ class App extends Component {
                   </div>
                   <hr/>
                   <div>
-                      { this.state.msg && this.props.member && mapToList2(this.state.msg) }
+                      { this.state.msg.length > 0 && this.props.member && mapToList2(this.state.msg) }
                   </div>
 
                   <div className="msgSendForm">
