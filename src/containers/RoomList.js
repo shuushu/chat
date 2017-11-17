@@ -1,36 +1,30 @@
 import { mapValues, size, isEmpty } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
-import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS, toJS } from 'react-redux-firebase';
+import { connect } from 'react-redux';
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
-const populate = { child: 'null', root: 'chat' }
+const populate = { child: 'users', root: 'chat' };
 
 @firebaseConnect(
     () => {
         return ([
-            { path: 'chat' , populates: [populate] } // places "goals" and "users" in redux , populates: [populate]
+            { path: 'chat/users/', populates: [populate]},
+            { path: 'chat/room/'},
         ])
     }
 )
 
 @connect(
     ({ firebase }, props) => {
-
-        let uid, user = props.firebase.auth().currentUser;
-
-        if (user !== null) {
-            uid = user.uid;
-        }
-
         return ({
-            //myProjects: populatedDataToJS(firebase, 'myProjects'),
-            // mapValues keeps items in list under their key
-            room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
+            auth: pathToJS(firebase, 'auth'),
+            room: dataToJS(firebase, 'chat/room/'),
+            /*room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
                 let obj = {};
                 //console.log('key : ' + key + '/' + child.join  + '\n UID : ' + uid )
 
@@ -57,8 +51,7 @@ const populate = { child: 'null', root: 'chat' }
                 }
 
                 return obj;
-            }),
-            auth: pathToJS(firebase, 'auth')
+            }),*/
         })
     }
 )
@@ -97,10 +90,6 @@ class RoomList extends Component {
             return false;
         }
     };
-
-    shouldComponentUpdate(nextProps) {
-        return (JSON.stringify(nextProps) !== JSON.stringify(this.props));
-    }
 
     render() {
         if(this.state.isLogin) {
@@ -196,7 +185,7 @@ class RoomList extends Component {
                 </nav>
 
                 <ul className="collection">
-                    {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
+                    {/*{this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }*/}
                 </ul>
             </div>
         );
