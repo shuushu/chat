@@ -1,20 +1,22 @@
 import { mapValues, size, isEmpty } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
-import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS, toJS } from 'react-redux-firebase';
 import { connect } from 'react-redux';
+import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS, toJS } from 'react-redux-firebase';
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
 
 const populate = { child: 'users', root: 'chat' };
+const populateMSG = { child: 'message', root: 'chat' };
 
 @firebaseConnect(
     () => {
         return ([
-            { path: 'chat/users/', populates: [populate]},
-            { path: 'chat/room/'},
+            { path: 'chat/users', populates: [populate]},
+            { path: 'chat/room', populates: [populate, populateMSG]},
+            { path: 'chat/message/', storeAs: 'msg', queryParams: ['limitToLast=1'], populates: [populateMSG]},
         ])
     }
 )
@@ -23,12 +25,23 @@ const populate = { child: 'users', root: 'chat' };
     ({ firebase }, props) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: dataToJS(firebase, 'chat/room/'),
-            /*room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
-                let obj = {};
+            room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
+
+                child['join'] = child.join.map((uid, i) => {
+                    return dataToJS(firebase, 'chat/users/' + uid);
+                });
+
+                console.log(dataToJS(firebase, 'msg/' + child.message));
+
+
+
+
+
+                return child;
+
                 //console.log('key : ' + key + '/' + child.join  + '\n UID : ' + uid )
 
-                for(let i=0;i<child.join.length; i++) {
+                /*for(let i=0;i<child.join.length; i++) {
                     if(uid === child.join[i]) {
                         let { join, message } = child;
                         let users = dataToJS(firebase, 'chat/users');
@@ -50,8 +63,8 @@ const populate = { child: 'users', root: 'chat' };
                     }
                 }
 
-                return obj;
-            }),*/
+                return obj;*/
+            })
         })
     }
 )
@@ -91,6 +104,10 @@ class RoomList extends Component {
         }
     };
 
+    shouldComponentUpdate(nextProps) {
+        return (JSON.stringify(nextProps) !== JSON.stringify(this.props));
+    }
+
     render() {
         if(this.state.isLogin) {
             return (
@@ -109,20 +126,20 @@ class RoomList extends Component {
             if(!isEmpty(data)) {
                 return Object.keys(data).map((key, index) => {
 
-                   if(size(data[key]) < 1){
-                       return false;
-                   }
+                    if(size(data[key]) < 1){
+                        return false;
+                    }
 
-                   let { join, message, roomState } = data[key];
+                    let { join, message, roomState } = data[key];
 
-                   // roomState 0 비활성화
-                   if(roomState <= 0) {
-                       ++ roomCnt;
-                       if(roomCnt <= 0) {
-                           return (<li>참여방 없음</li>);
-                       }
-                       return;
-                   }
+                    // roomState 0 비활성화
+                    if(roomState <= 0) {
+                        ++ roomCnt;
+                        if(roomCnt <= 0) {
+                            return (<li>참여방 없음</li>);
+                        }
+                        return;
+                    }
 
                     let getMember = (user) => {
                         return user.map((key, i) => {
@@ -168,8 +185,8 @@ class RoomList extends Component {
                             </a>
                         </li>
                     );
-               });
-           }
+                });
+            }
         };
 
         return (
@@ -185,7 +202,7 @@ class RoomList extends Component {
                 </nav>
 
                 <ul className="collection">
-                    {/*{this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }*/}
+                    {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
                 </ul>
             </div>
         );

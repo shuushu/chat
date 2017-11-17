@@ -60,12 +60,16 @@ class App extends Component {
         this.nowScrollDirection = '';
         this.isOnAddMessage = false;
 
+        this.isLoaded = false;
+
         this.onScroll = this.onScroll.bind(this);
         this.addMessage = this.addMessage.bind(this);
     }
 
     componentDidMount() {
         window.addEventListener('scroll', this.onScroll, true);
+
+        this.isLoaded = true;
     }
 
     componentWillReceiveProps({ message, auth }){
@@ -81,6 +85,13 @@ class App extends Component {
             if(newmsg.writer !== auth.uid && window.scrollY <= document.body.clientHeight - window.screen.height) {
                 this.setState({ newMessgae: true });
             }
+        }
+        // state가 맵핑되고 첫페이지 열때
+        if(this.isLoaded) {
+            this.setState({ msg: message }, () => {
+                tempMsg = message;
+                this.isLoaded = false;
+            });
         }
     }
 
