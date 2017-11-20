@@ -1,73 +1,12 @@
-import { mapValues, size, isEmpty } from 'lodash';
+import { mapValues, size, indexOf } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS, toJS } from 'react-redux-firebase';
+import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS, toJS, isLoaded, isEmpty } from 'react-redux-firebase';
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
 import '../scss/roomList.css';
-
-const populate = { child: 'users', root: 'chat' };
-const populateMSG = { child: 'message', root: 'chat' };
-
-@firebaseConnect(
-    () => {
-        return ([
-            { path: 'chat/users', populates: [populate]},
-            { path: 'chat/room', populates: [populate, populateMSG]},
-            { path: 'chat/message/', storeAs: 'msg', queryParams: ['limitToLast=1'], populates: [populateMSG]},
-        ])
-    }
-)
-
-@connect(
-    ({ firebase }, props) => {
-        return ({
-            auth: pathToJS(firebase, 'auth'),
-            room: mapValues(dataToJS(firebase, 'chat/room'), (child, key) => {
-
-                child['join'] = child.join.map((uid, i) => {
-                    return dataToJS(firebase, 'chat/users/' + uid);
-                });
-
-                console.log(dataToJS(firebase, 'msg/' + child.message));
-
-
-
-
-
-                return child;
-
-                //console.log('key : ' + key + '/' + child.join  + '\n UID : ' + uid )
-
-                /*for(let i=0;i<child.join.length; i++) {
-                    if(uid === child.join[i]) {
-                        let { join, message } = child;
-                        let users = dataToJS(firebase, 'chat/users');
-
-                        join.forEach((key, idx) => {
-                            join[idx] = users[key]
-                        });
-
-                        let msg, data = dataToJS(firebase, 'chat/message/' + message);
-
-                        if(data) {
-                            msg = data[data.length-1];
-                        } else {
-                            msg = null;
-                        }
-
-                        child.message = msg;
-                        obj = child;
-                    }
-                }
-
-                return obj;*/
-            })
-        })
-    }
-)
 
 class RoomList extends Component {
     state = {
@@ -109,6 +48,19 @@ class RoomList extends Component {
     }
 
     render() {
+        //https://github.com/prescottprue/react-redux-firebase/blob/master/examples/snippets/stateBasedQuery/App.js#L53-L75
+        const { auth } = this.props
+        if (!isLoaded(auth)) {
+            return <div>Loading...</div>
+        }
+
+        if (isEmpty(auth)) {
+            return <Redirect to="/Login" />
+        }
+
+
+
+
         if(this.state.isLogin) {
             return (
                 <Redirect to="/Login" />
@@ -143,7 +95,7 @@ class RoomList extends Component {
 
                     let getMember = (user) => {
                         return user.map((key, i) => {
-                            let { displayName } = key;
+                            let { displayName } = this.props.users[key];
 
                             return (
                                 <span key={`displayName${i}`}>{displayName}</span>
@@ -151,19 +103,9 @@ class RoomList extends Component {
                         });
                     };
 
-                    let getMessage = (data) => {
-                        let msg = this.props.message[data];
-
-                        if(msg) {
-                            return(
-                                <strong>{msg[msg.length-1].sendMsg}</strong>
-                            )
-                        }
-                    };
-
                     let getImage = (user) => {
                         return user.map((key, i) => {
-                            let { avatarUrl, displayName } = key;
+                            let { avatarUrl, displayName } = this.props.users[key];
 
                             return (
                                 <img key={`img${i}`} className={`i${i}`} src={avatarUrl} alt={displayName} />
@@ -171,14 +113,21 @@ class RoomList extends Component {
                         });
                     };
 
+                    let getMessage = (message) => {
+                        if(this.props.message[message]) {
+                            let {text} = this.props.message[message];
+
+                            return text
+                        }
+                    };
+
                     return (
                         <li key={`li-${key}`} className="collection-item avatar">
-                            <span className={`thumb circle cnt${join.length > 4 ? '4' : join.length }`}>{ getImage(join) }</span>
+                            {/*<span className={`thumb circle cnt${join.length > 4 ? '4' : join.length }`}>{ this.props.users && getImage(join) }</span>*/}
                             <Link to={`/roomView/${key}`}>
                                 <span>idx : {index}</span>
-                                <p>{this.props.message && getMessage(data[key].message)}</p>
-                                <div className="joins">참여자 : { getMember(join) }</div>
-                                <div>{ message && message.text }</div>
+                                {/*<div className="joins">참여자 : { this.props.users && getMember(join) }</div>*/}
+                                <div>{ size(this.props.message) > 0 && getMessage(message) }</div>
                             </Link>
                             <a className="btn-floating btn-large waves-effect waves-light blue" >
                                 <i className="large material-icons" onClick={() => {this.handleDelete(key)}}>delete</i>
@@ -204,9 +153,66 @@ class RoomList extends Component {
                 <ul className="collection">
                     {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
                 </ul>
+                <button>add PAGE</button>
             </div>
         );
     }
 }
 
-export default RoomList;
+//export default RoomList;
+const populate = {child: 'users', root: 'chat' };
+const populateMSG = { child: 'message', root: 'chat' };
+let temp = [];
+const fbWrapped = firebaseConnect(
+    (props) => {
+        let arr = [
+            { path: ['chat/users/JMQZWDDVs2ZfmPaWdPkUaYnCUhM2', 'chat/users/epDoQ5vU7DXAwnwgxFu8OaVGo3D2']},
+        ];
+
+        if(props.auth) {
+            arr[1] = { path: 'chat/room', storeAs: 'rooms', queryParams: ['orderByChild=master', `equalTo=${props.auth.uid}`]};
+
+            if(size(props.room) > 0) {
+                for(let i in props.room) {
+                    /*props.room[i].join.map((key) => {
+                        if(indexOf(temp, key) < 0) {
+                            temp.push(key);
+
+                        }
+                        arr[arr.length] = { path: 'chat/users/' + key, populate: [populate] }
+                    });
+*/
+                    arr[arr.length] = { path: 'chat/message/' + i,  queryParams: ['limitToLast=1'], populates: [populateMSG]}
+                }
+            }
+            //console.log(props.room)
+
+            return (arr);
+        }
+    }
+)(RoomList);
+
+export default connect(
+    ({ firebase }) => {
+        return ({
+            room: mapValues(dataToJS(firebase, 'rooms'), (child) => {
+                let userArr = dataToJS(firebase, 'chat/users');
+                console.log(userArr)
+
+                /*if(userArr) {
+                    child.join.forEach((key, i) => {
+                        child.join[i] = userArr[key];
+                    });
+                }*/
+                return child
+            }),
+            message: mapValues(dataToJS(firebase, 'chat/message'), (child) => {
+                for(let i in child) {
+                    child = child[i];
+                }
+                return child;
+            }),
+            auth: pathToJS(firebase, 'auth')
+        })
+    }
+)(fbWrapped)
