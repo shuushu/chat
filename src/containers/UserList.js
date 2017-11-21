@@ -76,9 +76,9 @@ class UserList extends Component {
         const KEY = convertDate('yymmddhhmmss');
 
         updates['/chat/room/' + KEY] = {
-            message: KEY,
+            message: '',
             join: joins,
-            msgCnt: 0,
+            unread: 0,
             roomState: 0
         };
 

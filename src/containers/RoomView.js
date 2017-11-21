@@ -231,6 +231,8 @@ class App extends Component {
                 that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({roomState: 1})
             }
 
+            that.props.firebase.ref(`chat/room/${that.props.rpath.match.params.key}`).update({message: context})
+
             this.isOnAddMessage = false;
         });
     };
