@@ -3,6 +3,8 @@ import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { firebaseConnect, pathToJS, dataToJS } from 'react-redux-firebase';
+import update from 'react-addons-update';
+
 // UI
 import 'materialize-css/dist/css/materialize.min.css';
 import 'materialize-css/dist/js/materialize.min';
@@ -11,7 +13,6 @@ import '../scss/roomList.css';
 @firebaseConnect(
     () => {
         return ([
-            { path: 'chat/users'},
             { path: 'chat/room'},
         ])
     }
@@ -23,10 +24,10 @@ import '../scss/roomList.css';
             auth: pathToJS(firebase, 'auth'),
             room: mapValues(dataToJS(firebase, 'chat/room'), (child) => {
 
-                child['join'] = child.join.map((uid, i) => {
+                /*child['join'] = child.join.map((uid, i) => {
                     return dataToJS(firebase, 'chat/users/' + uid);
                 });
-
+*/
 
                 return child;
             })
@@ -43,13 +44,58 @@ class RoomList extends Component {
             url: null
         },
         latestMsg: '',
+        roomList: []
     };
 
     componentDidMount(){
         // SEARCH
         let ref = this.props.firebase.ref('chat/room');
-        ref.orderByChild('join').equalTo(0).on('value', (snapshot) => {
-            console.log(snapshot.val())
+        ref.orderByChild('join').on('value', (snapshot) => {
+            let data = snapshot.val();
+            let uid = this.props.auth.uid;
+            let temp = [];
+
+            for(let i in data) {
+                let { join } = data[i];
+
+                join.map((user) => {
+                    if(user === uid) {
+                        temp.push(this.props.room[i]);
+                    }
+
+                });
+            }
+
+            this.setState({
+                roomList: temp
+            }, () => {
+                this.state.roomList.map(({join}) => {
+                    let joinArr = [];
+
+                    join.map((user) => {
+                        let getUser = this.props.firebase.ref(`chat/users/${user}`);
+                        // https://www.youtube.com/watch?v=l5bt79f4aHs
+                        getUser.on('value', (userData) => {
+                            this.setState({
+                                roomList: update(this.state.roomList, {
+                                    join: {$push: [222]}
+                                })
+                            });
+
+                            joinArr.push(userData.val())
+                        });
+                    });
+
+                    /*let ne = mapValues(this.state.roomList, (child) => {
+                        console.log(joinArr)
+                        child.join = joinArr;
+                        return child
+                    })*/
+
+
+                    //this.state.roomList.join
+                });
+            });
         });
 
     }
@@ -78,10 +124,6 @@ class RoomList extends Component {
             return false;
         }
     };
-
-    shouldComponentUpdate(nextProps) {
-        return (JSON.stringify(nextProps) !== JSON.stringify(this.props));
-    }
 
     render() {
         if(this.state.isLogin) {
@@ -177,7 +219,7 @@ class RoomList extends Component {
                 </nav>
 
                 <ul className="collection">
-                    {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
+                    {this.state.roomList.length > 0 ? mapToList(this.state.roomList) : <li>참여방 없음</li> }
                 </ul>
             </div>
         );

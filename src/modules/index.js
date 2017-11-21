@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import { penderReducer } from 'redux-pender';
+//import { penderReducer } from 'redux-pender';
 import { firebaseStateReducer } from 'react-redux-firebase'
 
 /*
@@ -12,6 +12,6 @@ import { firebaseStateReducer } from 'react-redux-firebase'
 구조로 나타남
 */
 export default combineReducers({
-    pender: penderReducer,
+    //pender: penderReducer,
     firebase: firebaseStateReducer
 });
