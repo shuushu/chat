@@ -1,4 +1,4 @@
-import { size, last, reduce, sortBy } from 'lodash';
+import { size, last, mapValues, sortBy } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -7,16 +7,15 @@ import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-re
 import {convertDate, convertTime, latestTime} from '../commonJS/Util';
 import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 
-const populate = { child: 'users', root: 'chat' };
+const populates = [  { child: 'join', root: 'chat/users', keyProp: 'key'} ];
+
 let page = 10;
 let tempMsg = [];
 
 @firebaseConnect(
     ({rpath}) => {
         return ([
-            { path: 'chat/users', populates: [populate]},
-            { path: 'chat/room/'  + rpath.match.params.key},
-            { path: 'chat/room/'  + rpath.match.params.key +'/join', populates: [populate]},
+            { path: 'chat/room/'  + rpath.match.params.key, storeAs: 'myRoom', populates},
             { path: 'chat/message/' + rpath.match.params.key, storeAs: 'message', queryParams: ['limitToLast=' + page] },
         ])
     }
@@ -26,17 +25,22 @@ let tempMsg = [];
     ({ firebase }, props) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: dataToJS(firebase, 'chat/room/' + props.rpath.match.params.key),
+            room: mapValues(populatedDataToJS(firebase, 'myRoom', populates), (child, key) => {
+                if(key === 'join') {
+                    let newKey = {};
+
+                    for(let k in child) {
+                        newKey[child[k].key] = child[k]
+                    }
+
+                    child = newKey;
+                }
+
+                return child;
+            }),
             message: sortBy(dataToJS(firebase, 'message'),[(o) => {
                 return o.seq
             }]),
-            member: reduce(dataToJS(firebase, 'chat/room/'  + props.rpath.match.params.key +'/join'), (v1,v2) => {
-                let obj = {};
-                obj[v1] = dataToJS(firebase, 'chat/users/' + v1);
-                obj[v2] =dataToJS(firebase, 'chat/users/' + v2);
-
-                return obj;
-            }),
         })
     }
 )
