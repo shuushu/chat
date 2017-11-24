@@ -15,7 +15,7 @@ const populates = [
 @firebaseConnect(
     () => {
         return ([
-            { path: 'chat/room/', queryParams: [ 'orderByKey' ], populates },
+            { path: 'chat/room/', storeAs: 'roomList', queryParams: [ 'orderByKey' ], populates },
         ])
     }
 )
@@ -24,7 +24,7 @@ const populates = [
     ({ firebase }) => {
         return ({
             auth: pathToJS(firebase, 'auth'),
-            room: mapValues(populatedDataToJS(firebase, 'chat/room',  populates), (child)=>{
+            roomList: mapValues(populatedDataToJS(firebase, 'roomList',  populates), (child)=>{
                 if(child !== null) {
                     for(let i in child.join){
                         if(child.join[i].key === firebase.getIn(['auth']).uid) {
@@ -62,8 +62,8 @@ class RoomList extends Component {
 
     // 방 삭제
     handleDelete = (key) => {
-        if(this.props.auth.uid === this.props.room[key].master){
-            let msgID = this.props.room[key].message;
+        if(this.props.auth.uid === this.props.roomList[key].master){
+            let msgID = this.props.roomList[key].message;
             this.props.firebase.remove('/room/' + key).then(()=>{
                 this.props.firebase.remove('/message/' + msgID)
             });
@@ -171,7 +171,7 @@ class RoomList extends Component {
                 </nav>
 
                 <ul className="collection">
-                    {this.props.room ? mapToList(this.props.room) : <li>참여방 없음</li> }
+                    {this.props.roomList ? mapToList(this.props.roomList) : <li>참여방 없음</li> }
                 </ul>
             </div>
         );

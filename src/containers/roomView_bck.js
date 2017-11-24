@@ -1,8 +1,7 @@
 import { size, last, mapValues, sortBy } from 'lodash';
 import React, { Component } from 'react';
 import { Redirect, Link } from 'react-router-dom';
-import { connect,  } from 'react-redux';
-import { compose } from 'redux';
+import { connect } from 'react-redux';
 import '../scss/roomView.css';
 import { firebaseConnect, pathToJS, dataToJS, populatedDataToJS } from 'react-redux-firebase';
 import {convertDate, convertTime, latestTime} from '../commonJS/Util';
@@ -11,6 +10,31 @@ import ReactCSSTransitionGroup  from 'react-addons-css-transition-group';
 const populates = [  { child: 'join', root: 'chat/users', keyProp: 'key'} ];
 
 let page = 10;
+let tempMsg = [];
+
+@firebaseConnect(
+    ({rpath}) => {
+        return ([
+            { path: 'chat/room/'  + rpath.match.params.key, storeAs: 'myRoom', populates},
+            { path: 'chat/message/' + rpath.match.params.key, storeAs: 'message', queryParams: ['limitToLast=' + page] },
+        ])
+    }
+)
+
+@connect(
+    ({ firebase }, props) => {
+        return ({
+            auth: pathToJS(firebase, 'auth'),
+            room: populatedDataToJS(firebase, 'myRoom', populates),
+            message: sortBy(dataToJS(firebase, 'message'),[(o) => {
+                return o.seq
+            }]),
+        })
+    }
+)
+
+
+
 
 class App extends Component {
     constructor(props) {
@@ -28,6 +52,7 @@ class App extends Component {
         this.nowScrollDirection = '';
         this.isOnAddMessage = false;
 
+        this.isLoaded = false;
 
         this.onScroll = this.onScroll.bind(this);
         this.addMessage = this.addMessage.bind(this);
@@ -35,6 +60,8 @@ class App extends Component {
 
     componentDidMount() {
         window.addEventListener('scroll', this.onScroll, true);
+
+        this.isLoaded = true;
     }
 
     componentWillReceiveProps({ message, auth }){
@@ -43,12 +70,36 @@ class App extends Component {
             this.setState({ redirect: true });
         }
 
-        this.setState({
-            msg: message
-        })
+        // props > state로 메세지 지정
+        if(message.length > 0){
+            let newmsg = last(message);
+
+            if(newmsg.writer !== auth.uid && window.scrollY <= document.body.clientHeight - window.screen.height) {
+                this.setState({ newMessgae: true });
+            }
+        }
+
+        // state가 맵핑되고 첫페이지 열때
+        if(this.isLoaded) {
+            this.setState({ msg: message }, () => {
+                tempMsg = message;
+                this.isLoaded = false;
+            });
+        }
     }
 
     componentWillUpdate(props, state) {
+        // 첫렌더링 맵핑
+        if(props.message.length - this.props.message.length === props.message.length && props.message.length > 0) {
+            this.setState({ msg: props.message }, () => {
+                tempMsg = props.message;
+            });
+        }
+
+        if(tempMsg.length > 0 && last(this.props.message).seq !== last(props.message).seq) {
+            tempMsg.push(last(props.message));
+            this.setState({ msg: tempMsg });
+        }
 
     }
 
@@ -58,10 +109,9 @@ class App extends Component {
             window.scrollTo(0, document.body.scrollHeight);
         }
 
-
-        if(size(prevState.msg) > 0 && size(this.state.msg) > 0) {
-            let newmsg = last(this.state.msg);
-            let oldmsg = last(prevState.msg);
+        if(this.props.message.length > 0 && prevProps.message.length > 0) { // 예외처리
+            let newmsg = last(this.props.message);
+            let oldmsg = last(prevProps.message);
 
             // 새로운 메세지 수신
             if(newmsg.seq !== oldmsg.seq) {
@@ -77,14 +127,11 @@ class App extends Component {
                 }
             }
         }
-
     }
 
     // 마운트해제
     componentWillUnmount() {
         window.removeEventListener('scroll', this.onScroll, true);
-
-        page = 10;
     }
 
     onScroll() {
@@ -122,23 +169,23 @@ class App extends Component {
     addMessage = (e) => {
         if(e) e.preventDefault();
 
-        page = page + 1;
+        page = this.state.msg.length + 1;
 
         let data = this.props.firebase.ref('chat/message/' + this.props.rpath.match.params.key).limitToLast(page);
 
         data.on('value', (snap) => {
-            /*if(tempMsg.length > size(sortBy(snap.val(), [(o) => { return o.seq }]))) {
+            if(tempMsg.length > size(sortBy(snap.val(), [(o) => { return o.seq }]))) {
                 return false;
-            }*/
+            }
 
             this.setState({
                 msg: sortBy(snap.val(), [(o) => {
                     return o.seq
                 }])
             }, () => {
-                /*if(tempMsg.length <= this.state.msg.length) {
+                if(tempMsg.length <= this.state.msg.length) {
                     tempMsg = this.state.msg;
-                }*/
+                }
             });
         });
     };
@@ -191,12 +238,12 @@ class App extends Component {
         }
 
         /*if(this.state.isEmpty) {
-            alert('개설된 방이 없음');
+         alert('개설된 방이 없음');
 
-            return (
-                <Redirect to={`/Login`} />
-            )
-        }*/
+         return (
+         <Redirect to={`/Login`} />
+         )
+         }*/
 
 
 
@@ -216,14 +263,13 @@ class App extends Component {
                     return (
                         <div key={`itemMSG${i}`} className={writer === this.props.auth.uid ? 'mine' : 'list'}>
                             <div className="imgs">
-                                {/*<img src={ getUserInfo(writer, 'avatarUrl') ? getUserInfo(writer, 'avatarUrl') : 'http://placehold.it/40x40' } alt="" />*/}
+                                <img src={ getUserInfo(writer, 'avatarUrl') ? getUserInfo(writer, 'avatarUrl') : 'http://placehold.it/40x40' } alt="" />
                             </div>
                             <div className="profile">
                                 <div>
-                                    22
-                                    {/*{ getUserInfo(writer, 'displayName') }*/}
-                                    {/*[{state}] /*/}
-                                    {/*<time dateTime={date}>{latestTime(date)}</time>*/}
+                                    { getUserInfo(writer, 'displayName') }
+                                    [{state}] /
+                                    <time dateTime={date}>{latestTime(date)}</time>
                                 </div>
                                 <p className="message">{text}</p>
                             </div>
@@ -262,52 +308,31 @@ class App extends Component {
         };
 
         return (
-              <div className="App">
-                  <div>
-                      <Link to={`/RoomList`}>뒤로</Link>
-                      참여인원:
-                      <button onClick={this.addMessage}>add message</button>
-                  </div>
-                  <hr/>
-                  <div>
-                      { size(this.state.msg) > 0 && mapToList2(this.state.msg) }
-                  </div>
+            <div className="App">
+                <div>
+                    <Link to={`/RoomList`}>뒤로</Link>
+                    참여인원:
+                    <button onClick={this.addMessage}>add message</button>
+                </div>
+                <hr/>
+                <div>
+                    { this.state.msg.length > 0 && size(this.props.room) > 0 && mapToList2(this.state.msg) }
+                </div>
 
-                  <div className="msgSendForm">
-                      <form action="" onSubmit={this.handleSubmit}>
-                            <input type="text" id="m"
-                                   value={this.state.latestMsg}
-                                   onChange={this.handleChange}
-                            />
-                            <button className="waves-effect waves-light btn" onClick={this.handleChangeMode} >
-                                <i className="material-icons right">send</i>SEND
-                            </button>
-                      </form>
-                  </div>
-              </div>
+                <div className="msgSendForm">
+                    <form action="" onSubmit={this.handleSubmit}>
+                        <input type="text" id="m"
+                               value={this.state.latestMsg}
+                               onChange={this.handleChange}
+                        />
+                        <button className="waves-effect waves-light btn" onClick={this.handleChangeMode} >
+                            <i className="material-icons right">send</i>SEND
+                        </button>
+                    </form>
+                </div>
+            </div>
         );
     }
 }
 
-export default compose(
-    connect(
-        ({ firebase }) => {
-            return ({
-                auth: pathToJS(firebase, 'auth'),
-                room: populatedDataToJS(firebase, 'myRoom', populates),
-                message: sortBy(dataToJS(firebase, 'message'),[(o) => {
-                    return o.seq
-                }]),
-            })
-        }
-    ),
-    firebaseConnect(
-        ({rpath, message}) => {
-            console.log('firebaseConnect', page)
-            return ([
-                { path: 'chat/room/'  + rpath.match.params.key, storeAs: 'myRoom', populates},
-                { path: 'chat/message/' + rpath.match.params.key, storeAs: 'message', queryParams: ['limitToLast=' + page] },
-            ])
-        }
-    )
-)(App)
+export default App;
